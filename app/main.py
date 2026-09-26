@@ -43,19 +43,20 @@ Path(settings.image_storage_path).mkdir(parents=True, exist_ok=True)
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     """Operator UI — main page."""
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="index.html")
 
 
 @app.get("/inspect", response_class=HTMLResponse)
 async def inspect_page(request: Request):
     """Operator UI — new inspection page."""
-    return templates.TemplateResponse("inspect.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="inspect.html")
 
 
 @app.get("/results/{inspection_id}", response_class=HTMLResponse)
 async def results_page(request: Request, inspection_id: str):
     """Operator UI — inspection results page."""
     return templates.TemplateResponse(
-        "results.html",
-        {"request": request, "inspection_id": inspection_id},
+        request=request,
+        name="results.html",
+        context={"inspection_id": inspection_id},
     )
