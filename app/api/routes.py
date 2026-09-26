@@ -332,6 +332,58 @@ async def override_decision(
     }
 
 
+@router.get("/api/v1/inspections/{inspection_id}/evidence")
+async def get_evidence_record(inspection_id: str, org_id: str = Query(...)):
+    """
+    Export the evidence record in the official CUBE contract format.
+    This endpoint is designed for interoperability with Returns Manager
+    and Recovery Manager (Round 3 pod integration).
+    """
+    data = db_get_inspection(inspection_id, org_id)
+    if not data:
+        data = _inspections.get(inspection_id)
+        if not data or data.get("order", {}).get("org_id") != org_id:
+            raise HTTPException(status_code=404, detail="Inspection not found")
+
+    evidence = data.get("evidence_record")
+    if not evidence:
+        raise HTTPException(status_code=404, detail="No evidence record for this inspection")
+
+    return evidence
+
+
+@router.get("/api/v1/evidence/by-unit/{unit_id}")
+async def get_evidence_by_unit(unit_id: str, org_id: str = Query(...)):
+    """
+    Look up evidence by unit_id — the cross-manager join key.
+    Returns Manager and Recovery Manager use this to find what was packed.
+    """
+    # Search in DB
+    from app.storage.database import _get_connection, DB_PATH
+    conn = _get_connection(DB_PATH)
+    try:
+        row = conn.execute(
+            "SELECT evidence_record FROM inspections WHERE unit_id = ? AND org_id = ? "
+            "ORDER BY created_at DESC LIMIT 1",
+            (unit_id, org_id),
+        ).fetchone()
+        if row and row["evidence_record"]:
+            import json as _json
+            return _json.loads(row["evidence_record"])
+    finally:
+        conn.close()
+
+    # Fallback to in-memory
+    for data in _inspections.values():
+        if (data.get("order", {}).get("unit_id") == unit_id
+                and data.get("order", {}).get("org_id") == org_id):
+            evidence = data.get("evidence_record")
+            if evidence:
+                return evidence
+
+    raise HTTPException(status_code=404, detail=f"No evidence found for unit {unit_id}")
+
+
 @router.get("/api/v1/health")
 async def health():
     """Health check endpoint."""

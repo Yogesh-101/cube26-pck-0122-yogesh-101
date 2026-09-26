@@ -22,6 +22,16 @@ A picker assembles an order and closes the box. If the wrong item or quantity go
 
 This agent serves **merchant-fulfilled and 3PL orders only**. FBA orders are packed by Amazon and are explicitly out of scope.
 
+### Position in the Chain
+
+```
+Receiving → Prep → [Pack Manager] → Returns → Recovery
+```
+
+Pack Manager is step 3 of 5. Our evidence records use `unit_id` as the join key shared across all five managers. Our output is consumed by:
+- **Returns Manager**: knows what was actually sent (to compare with what came back)
+- **Recovery Manager**: uses our evidence for buyer disputes, empty-box and wrong-item claims
+
 ---
 
 ## Solution Overview
@@ -133,6 +143,14 @@ Get full inspection detail with evidence record.
 
 Human override — preserves original AI decision.
 
+### `GET /api/v1/inspections/{id}/evidence?org_id=...`
+
+Export the evidence record in the official CUBE contract format. Designed for interoperability with Returns Manager and Recovery Manager (Round 3).
+
+### `GET /api/v1/evidence/by-unit/{unit_id}?org_id=...`
+
+Look up evidence by `unit_id` — the cross-manager join key. Other managers use this to find what Pack Manager saw and decided.
+
 ### `GET /api/v1/health`
 
 Health check.
@@ -157,17 +175,34 @@ decided_by, decided_at), overrides[], status, content_hash
 
 ## Evaluation Results
 
-| Metric | Value |
-|---|---|
-| Total eval cases | 51 |
-| Decision accuracy | **100%** |
-| **False PASS (dangerous)** | **0** |
-| False STOP | 0 |
-| UNCERTAIN → human review | 7 |
-| Per-check FP | 0 |
-| Per-check FN | 0 |
+### Decision Engine (80 cases, 0 false PASS)
 
-*Decision engine evaluation on deterministic test data. VLM-stage evaluation with held-out image data documented separately in `docs/EVALUATION.md`.*
+| Dataset | Cases | Correct | False PASS | False STOP |
+|---|---|---|---|---|
+| Synthetic (8 scenarios) | 51 | 51 | **0** | 0 |
+| Official CSV (`pack_sample.csv`) | 29 | 29 | **0** | 0 |
+| **Total** | **80** | **80** | **0** | **0** |
+
+### Findings from Official CSV
+
+The CSV contains **2 deliberately wrong operator verdicts** (operator said "seal" for incorrect packages). Our engine independently detected both:
+
+| Record | Issue | Operator | Engine |
+|---|---|---|---|
+| PCK-0034 | Extra USB-C cable in box | seal (wrong) | **STOP_AND_FIX** |
+| PCK-0044 | Expected candle, got bottle | seal (wrong) | **STOP_AND_FIX** |
+
+This proves the engine reasons independently from operator labels, as required.
+
+### Per-Check Metrics (FP/FN separated per honesty rules)
+
+| Check | TP | FP | FN | TN | UNCERTAIN |
+|---|---|---|---|---|---|
+| items_present | 14 | 0 | 0 | 10 | 0 |
+| no_extra_items | 12 | 0 | 0 | 10 | 0 |
+| quantity_match | 6 | 0 | 0 | 10 | 0 |
+
+Full methodology and results: [`docs/EVALUATION.md`](docs/EVALUATION.md)
 
 ---
 
@@ -175,12 +210,13 @@ decided_by, decided_at), overrides[], status, content_hash
 
 | Suite | Tests | Status |
 |---|---|---|
-| Decision engine | 21 | All pass |
+| Decision engine (8 scenarios + edges) | 21 | All pass |
 | Schema validation | 12 | All pass |
-| Org isolation | 6 | All pass |
+| Org isolation (Rule 1) | 6 | All pass |
 | Image quality gate | 9 | All pass |
-| Eval harness | 3 | All pass |
-| **Total** | **57** | **All pass** |
+| Eval harness (synthetic) | 3 | All pass |
+| Official CSV evaluation | 7 | All pass |
+| **Total** | **64** | **All pass** |
 
 ---
 
@@ -221,8 +257,8 @@ pack-manager/
 │   ├── main.py                # FastAPI app
 │   └── templates/             # Operator UI
 ├── tests/
-│   ├── unit/                  # 48 unit tests
-│   └── evaluation/            # Eval harness + 51 cases
+│   ├── unit/                  # 48 unit tests (engine, schemas, org isolation, quality)
+│   └── evaluation/            # Eval harness (51 synthetic + 29 CSV = 80 cases)
 ├── docs/
 │   └── EVALUATION.md          # Eval report with metrics
 ├── data/                      # Organiser sample CSV (untouched)
@@ -244,7 +280,7 @@ pack-manager/
 | Schemas | Pydantic v2 | Validated contracts, JSON Schema generation |
 | Storage | SQLite (WAL mode) | Zero-config, sufficient for individual build |
 | UI | Jinja2 templates | Minimal, functional, no build step |
-| Testing | pytest | 57 tests across 5 suites |
+| Testing | pytest | 64 tests across 6 suites |
 
 ---
 
