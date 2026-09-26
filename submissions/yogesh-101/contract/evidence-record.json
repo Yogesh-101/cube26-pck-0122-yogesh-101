@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Pack Manager Evidence Record",
+  "description": "Evidence record produced by Pack Manager for each verified unit. Consumed by Returns Manager and Recovery Manager via the unit_id join key.",
+  "type": "object",
+  "required": [
+    "record_id",
+    "schema_version",
+    "organization_id",
+    "agent",
+    "subject",
+    "captured_at",
+    "images",
+    "checks",
+    "outcome",
+    "status",
+    "content_hash"
+  ],
+  "properties": {
+    "record_id": {
+      "type": "string",
+      "pattern": "^PCK-[A-Z0-9]+$",
+      "description": "Unique evidence record identifier"
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Evidence record schema version"
+    },
+    "organization_id": {
+      "type": "string",
+      "description": "Tenant identifier — all queries scoped to this"
+    },
+    "client_id": {
+      "type": ["string", "null"],
+      "description": "Optional client identifier within the org"
+    },
+    "agent": {
+      "type": "string",
+      "const": "pack_manager",
+      "description": "Which manager produced this record"
+    },
+    "subject": {
+      "type": "string",
+      "description": "The unit_id — cross-manager join key shared with Receiving, Prep, Returns, Recovery"
+    },
+    "captured_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the inspection was performed (ISO 8601)"
+    },
+    "operator_label": {
+      "type": ["string", "null"],
+      "description": "Operator's own verdict before AI (may be wrong — captured for comparison)"
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["image_id", "path", "sha256", "captured_at"],
+        "properties": {
+          "image_id": {
+            "type": "string",
+            "description": "Unique image identifier"
+          },
+          "path": {
+            "type": "string",
+            "description": "Storage path of the captured image"
+          },
+          "sha256": {
+            "type": "string",
+            "description": "SHA-256 hash of the image file"
+          },
+          "captured_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "description": "Photographs of the open package"
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["check_key", "verdict", "confidence", "detail", "model_version", "latency_ms"],
+        "properties": {
+          "check_key": {
+            "type": "string",
+            "enum": ["image_quality", "items_present", "quantity_match", "no_extra_items", "no_wrong_items"],
+            "description": "Which named check this result is for"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": ["pass", "fail", "uncertain"],
+            "description": "Per-check verdict"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Model confidence in this verdict"
+          },
+          "detail": {
+            "type": "string",
+            "description": "Human-readable explanation of the verdict"
+          },
+          "model_version": {
+            "type": "string",
+            "description": "Which model version produced this check"
+          },
+          "latency_ms": {
+            "type": "number",
+            "description": "Time taken for this check in milliseconds"
+          }
+        }
+      },
+      "description": "Per-check verdicts with confidence and detail"
+    },
+    "outcome": {
+      "type": "object",
+      "required": ["decision", "decided_by", "decided_at"],
+      "properties": {
+        "decision": {
+          "type": "string",
+          "enum": ["seal", "stop_and_fix"],
+          "description": "Final operational decision"
+        },
+        "decided_by": {
+          "type": "string",
+          "description": "Who made the decision (agent or operator_id)"
+        },
+        "decided_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "Final decision and who made it"
+    },
+    "overrides": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["original_decision", "new_decision", "reason", "operator_id", "overridden_at"],
+        "properties": {
+          "original_decision": { "type": "string" },
+          "new_decision": { "type": "string" },
+          "reason": { "type": "string" },
+          "operator_id": { "type": "string" },
+          "overridden_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "description": "Append-only human overrides — original verdict is never deleted"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["completed", "pending", "pending_review"],
+      "description": "Current inspection status"
+    },
+    "content_hash": {
+      "type": "string",
+      "description": "SHA-256 of the canonical JSON (integrity verification, not tamper-evident)"
+    }
+  },
+  "additionalProperties": false
+}

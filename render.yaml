@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: pack-manager
+    runtime: docker
+    repo: https://github.com/Yogesh-101/cube26-pck-0122-yogesh-101
+    branch: main
+    plan: free
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: APP_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: IMAGE_STORAGE_PATH
+        value: /app/storage/images
+      - key: SECRET_KEY
+        generateValue: true

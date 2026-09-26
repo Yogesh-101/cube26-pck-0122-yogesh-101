@@ -216,7 +216,8 @@ Full methodology and results: [`docs/EVALUATION.md`](docs/EVALUATION.md)
 | Image quality gate | 9 | All pass |
 | Eval harness (synthetic) | 3 | All pass |
 | Official CSV evaluation | 7 | All pass |
-| **Total** | **64** | **All pass** |
+| Live VLM integration | 3 | All pass |
+| **Total** | **67** | **All pass** |
 
 ---
 
@@ -245,25 +246,36 @@ Full methodology and results: [`docs/EVALUATION.md`](docs/EVALUATION.md)
 ```
 pack-manager/
 ├── app/
-│   ├── api/routes.py          # FastAPI endpoints
+│   ├── api/routes.py          # FastAPI endpoints (verify, inspect, override, evidence)
 │   ├── decision/engine.py     # Deterministic decision engine
 │   ├── domain/schemas.py      # Pydantic data contracts
 │   ├── vision/
-│   │   ├── gemini_client.py   # Gemini VLM client
+│   │   ├── gemini_client.py   # Gemini VLM client (single batched call)
 │   │   └── quality.py         # Image quality gate
-│   ├── storage/database.py    # SQLite persistence
+│   ├── storage/database.py    # SQLite persistence (org-scoped)
 │   ├── pipeline.py            # End-to-end orchestration
 │   ├── config.py              # Environment settings
 │   ├── main.py                # FastAPI app
 │   └── templates/             # Operator UI
 ├── tests/
 │   ├── unit/                  # 48 unit tests (engine, schemas, org isolation, quality)
+│   ├── integration/           # 3 live VLM tests (full pipeline, direct client, fail-open)
 │   └── evaluation/            # Eval harness (51 synthetic + 29 CSV = 80 cases)
+├── submissions/yogesh-101/    # Submission deliverables
+│   ├── 01-customer-letter.md
+│   ├── 02-prfaq.md
+│   ├── 03-one-pager.md
+│   ├── CLAUDE.md
+│   ├── build-brief.md
+│   ├── build-log.md
+│   ├── eval-report.md
+│   └── contract/evidence-record.json
 ├── docs/
 │   └── EVALUATION.md          # Eval report with metrics
 ├── data/                      # Organiser sample CSV (untouched)
 ├── ARCHITECTURE.md
 ├── .env.example
+├── render.yaml                # One-click Render deployment
 ├── Dockerfile
 ├── docker-compose.yml
 └── requirements.txt
@@ -280,7 +292,7 @@ pack-manager/
 | Schemas | Pydantic v2 | Validated contracts, JSON Schema generation |
 | Storage | SQLite (WAL mode) | Zero-config, sufficient for individual build |
 | UI | Jinja2 templates | Minimal, functional, no build step |
-| Testing | pytest | 64 tests across 6 suites |
+| Testing | pytest | 67 tests across 7 suites |
 
 ---
 

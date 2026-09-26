@@ -32,32 +32,33 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 VLM_RESPONSE_SCHEMA = {
-    "type": "object",
+    "type": "OBJECT",
     "properties": {
         "observed_items": {
-            "type": "array",
+            "type": "ARRAY",
             "description": "Every distinct product visible in the open package",
             "items": {
-                "type": "object",
+                "type": "OBJECT",
                 "properties": {
                     "sku": {
-                        "type": ["string", "null"],
+                        "type": "STRING",
+                        "nullable": True,
                         "description": "Matched SKU from the provided catalogue, or null if no match"
                     },
                     "name": {
-                        "type": "string",
+                        "type": "STRING",
                         "description": "Product name as identified"
                     },
                     "observed_quantity": {
-                        "type": "integer",
+                        "type": "INTEGER",
                         "description": "Count of this product visible in the package"
                     },
                     "confidence": {
-                        "type": "number",
+                        "type": "NUMBER",
                         "description": "Confidence in identification (0.0 to 1.0)"
                     },
                     "observation_text": {
-                        "type": "string",
+                        "type": "STRING",
                         "description": "Brief description of what was observed"
                     }
                 },
@@ -65,22 +66,22 @@ VLM_RESPONSE_SCHEMA = {
             }
         },
         "image_quality_assessment": {
-            "type": "object",
+            "type": "OBJECT",
             "properties": {
                 "is_sufficient": {
-                    "type": "boolean",
+                    "type": "BOOLEAN",
                     "description": "Whether the images are clear enough for reliable verification"
                 },
                 "issues": {
-                    "type": "array",
-                    "items": {"type": "string"},
+                    "type": "ARRAY",
+                    "items": {"type": "STRING"},
                     "description": "Any quality issues noticed (blur, glare, occlusion, etc.)"
                 }
             },
             "required": ["is_sufficient", "issues"]
         },
         "overall_notes": {
-            "type": "string",
+            "type": "STRING",
             "description": "Any additional observations about the package contents"
         }
     },
