@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% block title %}Pack Manager — Inspection Results{% endblock %}
+
+{% block content %}
+<div id="results-container">
+    <div class="loading"><div class="spinner"></div><br>Loading inspection results...</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const inspectionId = "{{ inspection_id }}";
+
+async function loadResults() {
+    const container = document.getElementById('results-container');
+    const orgId = new URLSearchParams(window.location.search).get('org_id') || 'org_demo_alpha';
+
+    try {
+        const res = await fetch(`/api/v1/inspections/${inspectionId}?org_id=${encodeURIComponent(orgId)}`);
+        if (!res.ok) {
+            container.innerHTML = '<div class="card"><p style="color:var(--stop)">Inspection not found. Check org_id.</p></div>';
+            return;
+        }
+        const data = await res.json();
+        renderResults(data, container, orgId);
+    } catch (err) {
+        container.innerHTML = `<div class="card"><p style="color:var(--stop)">Error: ${err.message}</p></div>`;
+    }
+}
+
+function renderResults(data, container, orgId) {
+    const order = data.order || {};
+    const outcome = data.outcome || {};
+    const checks = data.checks || [];
+    const observed = data.observed_items || [];
+    const evidence = data.evidence_record || {};
+    const overrides = evidence.overrides || [];
+
+    const decision = outcome.decision || 'pending';
+    const decClass = decision === 'seal' ? 'decision-seal' :
+                     decision === 'stop_and_fix' ? 'decision-stop' :
+                     data.status === 'pending_review' ? 'decision-uncertain' : 'decision-pending';
+    const decLabel = decision === 'seal' ? 'SEAL' :
+                     decision === 'stop_and_fix' ? 'STOP & FIX' : 'PENDING';
+
+    let html = '';
+
+    // Decision Banner
+    html += `<div class="decision-banner ${decClass}">${decLabel}</div>`;
+
+    // Summary
+    html += `<div class="card">
+        <h2>Inspection Summary</h2>
+        <table>
+            <tr><td style="color:var(--text-muted);width:160px">Order ID</td><td>${order.order_id || '-'}</td></tr>
+            <tr><td style="color:var(--text-muted)">Unit ID</td><td>${order.unit_id || '-'}</td></tr>
+            <tr><td style="color:var(--text-muted)">Organization</td><td>${order.org_id || '-'}</td></tr>
+            <tr><td style="color:var(--text-muted)">Channel</td><td>${order.channel || '-'}</td></tr>
+            <tr><td style="color:var(--text-muted)">Status</td><td>${data.status || '-'}</td></tr>
+            <tr><td style="color:var(--text-muted)">Evidence Record</td><td style="font-family:monospace;font-size:0.8rem">${evidence.record_id || '-'}</td></tr>
+            <tr><td style="color:var(--text-muted)">Content Hash</td><td style="font-family:monospace;font-size:0.75rem;word-break:break-all">${evidence.content_hash || '-'}</td></tr>
+        </table>
+    </div>`;
+
+    // Expected vs Observed
+    const lines = order.lines || [];
+    html += `<div class="grid-2">`;
+
+    // Expected
+    html += `<div class="card"><h2>Expected (Order)</h2>`;
+    if (lines.length) {
+        html += '<table><thead><tr><th>SKU</th><th>Qty</th></tr></thead><tbody>';
+        for (const l of lines) {
+            html += `<tr><td>${l.sku}</td><td>${l.quantity}</td></tr>`;
+        }
+        html += '</tbody></table>';
+    } else {
+        html += '<p style="color:var(--text-muted)">No order lines</p>';
+    }
+    html += `</div>`;
+
+    // Observed
+    html += `<div class="card"><h2>Observed (AI Detection)</h2>`;
+    if (observed.length) {
+        html += '<table><thead><tr><th>Product</th><th>SKU</th><th>Qty</th><th>Confidence</th></tr></thead><tbody>';
+        for (const o of observed) {
+            const conf = (o.confidence * 100).toFixed(0);
+            const confColor = o.confidence >= 0.7 ? 'var(--seal)' : o.confidence >= 0.5 ? 'var(--uncertain)' : 'var(--stop)';
+            html += `<tr>
+                <td>${o.name}</td>
+                <td>${o.sku || '<em style="color:var(--text-muted)">unknown</em>'}</td>
+                <td>${o.observed_quantity}</td>
+                <td style="color:${confColor}">${conf}%</td>
+            </tr>`;
+        }
+        html += '</tbody></table>';
+    } else {
+        html += '<p style="color:var(--text-muted)">No items detected</p>';
+    }
+    html += `</div></div>`;
+
+    // Checks
+    html += `<div class="card"><h2>Verification Checks</h2>`;
+    html += '<table><thead><tr><th>Check</th><th>Verdict</th><th>Confidence</th><th>Detail</th></tr></thead><tbody>';
+    for (const c of checks) {
+        const badgeClass = c.verdict === 'pass' ? 'badge-pass' :
+                          c.verdict === 'fail' ? 'badge-fail' : 'badge-uncertain';
+        const vLabel = c.verdict.toUpperCase();
+        html += `<tr>
+            <td>${c.check_key.replace(/_/g, ' ').toUpperCase()}</td>
+            <td><span class="badge ${badgeClass}">${vLabel}</span></td>
+            <td>${(c.confidence * 100).toFixed(0)}%</td>
+            <td style="font-size:0.85rem;color:var(--text-muted)">${c.detail}</td>
+        </tr>`;
+    }
+    html += '</tbody></table></div>';
+
+    // Overrides
+    if (overrides.length) {
+        html += `<div class="card"><h2>Human Overrides</h2>`;
+        for (const o of overrides) {
+            html += `<div class="evidence-item">
+                <strong>${o.original_decision}</strong> &rarr; <strong>${o.new_decision}</strong>
+                by ${o.operator_id}<br>
+                <span style="color:var(--text-muted);font-size:0.85rem">Reason: ${o.reason}</span>
+            </div>`;
+        }
+        html += `</div>`;
+    }
+
+    // Override section
+    if (decision !== 'seal' || data.status === 'pending_review') {
+        html += `<div class="card">
+            <h2>Operator Override</h2>
+            <p style="color:var(--text-muted);margin-bottom:16px;">
+                Override the AI decision. The original decision is preserved in the evidence record.
+            </p>
+            <form id="overrideForm">
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>New Decision</label>
+                        <select id="override-decision">
+                            <option value="seal">SEAL</option>
+                            <option value="stop_and_fix">STOP & FIX</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Operator ID</label>
+                        <input type="text" id="override-operator" required placeholder="e.g. OP-001">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Reason</label>
+                    <textarea id="override-reason" required rows="2" placeholder="Explain why you are overriding the AI decision..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit Override</button>
+                <span id="override-status" style="margin-left:16px;"></span>
+            </form>
+        </div>`;
+    }
+
+    // Evidence JSON
+    html += `<div class="card">
+        <h2>Raw Evidence Record</h2>
+        <details>
+            <summary style="cursor:pointer;color:var(--accent);margin-bottom:8px;">Show/Hide JSON</summary>
+            <pre style="background:var(--surface2);padding:16px;border-radius:var(--radius);overflow-x:auto;font-size:0.8rem;max-height:400px;overflow-y:auto;">${JSON.stringify(evidence, null, 2)}</pre>
+        </details>
+    </div>`;
+
+    container.innerHTML = html;
+
+    // Attach override handler
+    const overrideForm = document.getElementById('overrideForm');
+    if (overrideForm) {
+        overrideForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const statusEl = document.getElementById('override-status');
+            try {
+                const res = await fetch(`/api/v1/inspections/${inspectionId}/override?org_id=${encodeURIComponent(orgId)}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        new_decision: document.getElementById('override-decision').value,
+                        reason: document.getElementById('override-reason').value,
+                        operator_id: document.getElementById('override-operator').value,
+                    })
+                });
+                if (res.ok) {
+                    statusEl.innerHTML = '<span style="color:var(--seal)">Override saved. Reloading...</span>';
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    const err = await res.json();
+                    statusEl.innerHTML = `<span style="color:var(--stop)">Error: ${err.detail}</span>`;
+                }
+            } catch (err) {
+                statusEl.innerHTML = `<span style="color:var(--stop)">${err.message}</span>`;
+            }
+        });
+    }
+}
+
+loadResults();
+</script>
+{% endblock %}

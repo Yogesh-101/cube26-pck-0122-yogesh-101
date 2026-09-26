@@ -7,3 +7,8 @@ __pycache__/
 .venv/
 venv/
 .DS_Store
+*.db
+storage/images/*
+!storage/images/.gitkeep
+.pytest_cache/
+.cursor/

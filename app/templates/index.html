@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Pack Manager — Dashboard{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Pack Manager Dashboard</h2>
+    <p style="color: var(--text-muted); margin-bottom: 20px;">
+        AI packing verification agent — verify every order before the box is sealed.
+    </p>
+    <a href="/inspect" class="btn btn-primary">New Inspection</a>
+</div>
+
+<div class="card">
+    <h2>Recent Inspections</h2>
+    <div id="inspections-list">
+        <div class="loading"><div class="spinner"></div><br>Loading...</div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <h2>How It Works</h2>
+        <div style="font-size: 0.9rem; color: var(--text-muted);">
+            <p><strong>1.</strong> Upload photographs of the open package</p>
+            <p><strong>2.</strong> Enter the expected order details</p>
+            <p><strong>3.</strong> AI analyzes contents and verifies against order</p>
+            <p><strong>4.</strong> Get a decision: SEAL or STOP &amp; FIX</p>
+            <p><strong>5.</strong> Override if needed — original decision is preserved</p>
+        </div>
+    </div>
+    <div class="card">
+        <h2>System Info</h2>
+        <table>
+            <tr><td style="color:var(--text-muted)">Agent</td><td>pack_manager</td></tr>
+            <tr><td style="color:var(--text-muted)">Version</td><td>1.0.0</td></tr>
+            <tr><td style="color:var(--text-muted)">Schema</td><td>1.0.0</td></tr>
+            <tr><td style="color:var(--text-muted)">Evidence</td><td>Official contract</td></tr>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function loadInspections() {
+    const container = document.getElementById('inspections-list');
+    try {
+        const orgId = prompt('Enter your org_id (e.g. org_demo_alpha):') || 'org_demo_alpha';
+        const res = await fetch(`/api/v1/inspections?org_id=${encodeURIComponent(orgId)}`);
+        const data = await res.json();
+
+        if (!data.length) {
+            container.innerHTML = '<p style="color:var(--text-muted);padding:20px 0;">No inspections yet. Start a new one!</p>';
+            return;
+        }
+
+        let html = '<table><thead><tr><th>Unit</th><th>Order</th><th>Decision</th><th>Status</th><th></th></tr></thead><tbody>';
+        for (const item of data) {
+            const badgeClass = item.decision === 'seal' ? 'badge-seal' :
+                             item.decision === 'stop_and_fix' ? 'badge-stop' :
+                             item.status === 'pending_review' ? 'badge-uncertain' : 'badge-pending';
+            const label = item.decision === 'seal' ? 'SEAL' :
+                         item.decision === 'stop_and_fix' ? 'STOP & FIX' : 'PENDING';
+            html += `<tr>
+                <td>${item.unit_id || '-'}</td>
+                <td>${item.order_id || '-'}</td>
+                <td><span class="badge ${badgeClass}">${label}</span></td>
+                <td>${item.status}</td>
+                <td><a href="/results/${item.inspection_id}" class="btn btn-primary" style="padding:4px 12px;font-size:0.8rem;">View</a></td>
+            </tr>`;
+        }
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    } catch (e) {
+        container.innerHTML = '<p style="color:var(--text-muted);padding:20px 0;">Enter org_id to view inspections.</p>';
+    }
+}
+loadInspections();
+</script>
+{% endblock %}

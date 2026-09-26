@@ -1,0 +1,338 @@
+"""
+PCK Pack Manager — FastAPI Routes
+
+API endpoints for pack verification, inspection retrieval,
+and human override.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import os
+import shutil
+import uuid
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Optional
+
+from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
+from pydantic import BaseModel, Field
+
+from app.config import get_settings
+from app.domain.schemas import (
+    CatalogueProduct,
+    Channel,
+    Decision,
+    EvidenceRecord,
+    HumanOverride,
+    InspectionStatus,
+    Order,
+    OrderLine,
+)
+from app.pipeline import run_inspection
+from app.storage.database import (
+    get_inspection as db_get_inspection,
+    init_database,
+    list_inspections as db_list_inspections,
+    save_inspection as db_save_inspection,
+    save_override as db_save_override,
+    get_overrides as db_get_overrides,
+)
+
+logger = logging.getLogger(__name__)
+router = APIRouter()
+
+# In-memory fallback (used alongside DB)
+_inspections: dict[str, dict] = {}
+
+# Initialize database on module load
+init_database()
+
+
+# ---------------------------------------------------------------------------
+# Request/Response Models
+# ---------------------------------------------------------------------------
+
+class VerifyRequest(BaseModel):
+    """Request body for the /verify endpoint (JSON part)."""
+    order_id: str
+    unit_id: str
+    org_id: str
+    channel: Channel
+    order_lines: list[OrderLine]
+    catalogue: list[CatalogueProduct] = Field(default_factory=list)
+
+
+class VerifyResponse(BaseModel):
+    """Response from the /verify endpoint."""
+    inspection_id: str
+    order_id: str
+    unit_id: str
+    decision: str
+    status: str
+    checks: list[dict]
+    observed_items: list[dict]
+    discrepancies: list[dict] = Field(default_factory=list)
+    evidence_record_id: Optional[str] = None
+    content_hash: Optional[str] = None
+
+
+class OverrideRequest(BaseModel):
+    """Request body for human override."""
+    new_decision: Decision
+    reason: str = Field(..., min_length=1)
+    operator_id: str = Field(..., min_length=1)
+
+
+# ---------------------------------------------------------------------------
+# Endpoints
+# ---------------------------------------------------------------------------
+
+@router.post("/api/v1/verify", response_model=VerifyResponse)
+async def verify_package(
+    order_data: str = Form(..., description="JSON string of VerifyRequest"),
+    images: list[UploadFile] = File(..., description="Package photographs"),
+):
+    """
+    Verify package contents against an order.
+
+    Accepts order data as a JSON form field and images as file uploads.
+    Returns the inspection result with decision, checks, and evidence.
+    """
+    settings = get_settings()
+
+    # Parse order data
+    try:
+        req = VerifyRequest.model_validate_json(order_data)
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"Invalid order data: {e}")
+
+    # Save uploaded images
+    image_dir = Path(settings.image_storage_path) / req.unit_id
+    image_dir.mkdir(parents=True, exist_ok=True)
+
+    image_paths = []
+    for upload in images:
+        ext = Path(upload.filename or "image.jpg").suffix or ".jpg"
+        filename = f"{uuid.uuid4().hex[:8]}{ext}"
+        file_path = image_dir / filename
+        with open(file_path, "wb") as f:
+            content = await upload.read()
+            f.write(content)
+        image_paths.append(str(file_path))
+
+    # Build order
+    order = Order(
+        order_id=req.order_id,
+        unit_id=req.unit_id,
+        org_id=req.org_id,
+        channel=req.channel,
+        lines=req.order_lines,
+    )
+
+    # Run pipeline
+    inspection = run_inspection(
+        order=order,
+        image_paths=image_paths,
+        catalogue=req.catalogue,
+    )
+
+    # Persist to database and in-memory cache
+    inspection_data = inspection.model_dump(mode="json")
+    _inspections[inspection.inspection_id] = inspection_data
+    try:
+        db_save_inspection(inspection_data)
+    except Exception as e:
+        logger.error(f"DB save failed (fail-open): {e}")
+
+    # Build response
+    decision_str = inspection.outcome.decision.value if inspection.outcome else "pending"
+
+    return VerifyResponse(
+        inspection_id=inspection.inspection_id,
+        order_id=order.order_id,
+        unit_id=order.unit_id,
+        decision=decision_str,
+        status=inspection.status.value,
+        checks=[c.model_dump(mode="json") for c in inspection.checks],
+        observed_items=[o.model_dump(mode="json") for o in inspection.observed_items],
+        evidence_record_id=inspection.evidence_record.record_id if inspection.evidence_record else None,
+        content_hash=inspection.evidence_record.content_hash if inspection.evidence_record else None,
+    )
+
+
+@router.post("/api/v1/verify/json", response_model=VerifyResponse)
+async def verify_package_json(
+    order_id: str = Form(...),
+    unit_id: str = Form(...),
+    org_id: str = Form(...),
+    channel: str = Form(...),
+    order_lines_json: str = Form(..., description="JSON array of {sku, quantity}"),
+    catalogue_json: str = Form(default="[]", description="JSON array of catalogue products"),
+    images: list[UploadFile] = File(...),
+):
+    """
+    Alternative verify endpoint with flat form fields (easier for UI forms).
+    """
+    settings = get_settings()
+
+    try:
+        lines_data = json.loads(order_lines_json)
+        order_lines = [OrderLine(**l) for l in lines_data]
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"Invalid order_lines: {e}")
+
+    try:
+        cat_data = json.loads(catalogue_json)
+        catalogue = [CatalogueProduct(**c) for c in cat_data]
+    except Exception:
+        catalogue = []
+
+    # Save uploaded images
+    image_dir = Path(settings.image_storage_path) / unit_id
+    image_dir.mkdir(parents=True, exist_ok=True)
+
+    image_paths = []
+    for upload in images:
+        ext = Path(upload.filename or "image.jpg").suffix or ".jpg"
+        filename = f"{uuid.uuid4().hex[:8]}{ext}"
+        file_path = image_dir / filename
+        with open(file_path, "wb") as f:
+            content = await upload.read()
+            f.write(content)
+        image_paths.append(str(file_path))
+
+    order = Order(
+        order_id=order_id,
+        unit_id=unit_id,
+        org_id=org_id,
+        channel=channel,
+        lines=order_lines,
+    )
+
+    inspection = run_inspection(order=order, image_paths=image_paths, catalogue=catalogue)
+
+    inspection_data = inspection.model_dump(mode="json")
+    _inspections[inspection.inspection_id] = inspection_data
+    try:
+        db_save_inspection(inspection_data)
+    except Exception as e:
+        logger.error(f"DB save failed (fail-open): {e}")
+
+    decision_str = inspection.outcome.decision.value if inspection.outcome else "pending"
+
+    return VerifyResponse(
+        inspection_id=inspection.inspection_id,
+        order_id=order.order_id,
+        unit_id=order.unit_id,
+        decision=decision_str,
+        status=inspection.status.value,
+        checks=[c.model_dump(mode="json") for c in inspection.checks],
+        observed_items=[o.model_dump(mode="json") for o in inspection.observed_items],
+        evidence_record_id=inspection.evidence_record.record_id if inspection.evidence_record else None,
+        content_hash=inspection.evidence_record.content_hash if inspection.evidence_record else None,
+    )
+
+
+@router.get("/api/v1/inspections/{inspection_id}")
+async def get_inspection(inspection_id: str, org_id: str = Query(...)):
+    """
+    Retrieve a single inspection by ID (org-scoped for isolation).
+    """
+    # Try DB first, fallback to memory
+    data = db_get_inspection(inspection_id, org_id)
+    if not data:
+        data = _inspections.get(inspection_id)
+        if not data or data.get("order", {}).get("org_id") != org_id:
+            raise HTTPException(status_code=404, detail="Inspection not found")
+
+    return data
+
+
+@router.get("/api/v1/inspections")
+async def list_inspections(org_id: str = Query(...)):
+    """
+    List all inspections for an organization (tenancy-scoped).
+    """
+    results = db_list_inspections(org_id)
+
+    # Merge in-memory inspections not yet in DB
+    db_ids = {r["inspection_id"] for r in results}
+    for iid, data in _inspections.items():
+        if iid not in db_ids and data.get("order", {}).get("org_id") == org_id:
+            results.append({
+                "inspection_id": iid,
+                "order_id": data.get("order", {}).get("order_id"),
+                "unit_id": data.get("order", {}).get("unit_id"),
+                "status": data.get("status"),
+                "decision": data.get("outcome", {}).get("decision") if data.get("outcome") else None,
+            })
+    return results
+
+
+@router.post("/api/v1/inspections/{inspection_id}/override")
+async def override_decision(
+    inspection_id: str,
+    override: OverrideRequest,
+    org_id: str = Query(...),
+):
+    """
+    Human operator override — preserves original AI decision.
+    Append-only: the original verdict is never overwritten.
+    """
+    # Try DB first
+    data = db_get_inspection(inspection_id, org_id)
+    if not data:
+        data = _inspections.get(inspection_id)
+        if not data or data.get("order", {}).get("org_id") != org_id:
+            raise HTTPException(status_code=404, detail="Inspection not found")
+
+    original_decision = data.get("outcome", {}).get("decision", "stop_and_fix") if data.get("outcome") else "stop_and_fix"
+
+    # Save override to DB
+    success = db_save_override(
+        inspection_id=inspection_id,
+        org_id=org_id,
+        original_decision=original_decision,
+        new_decision=override.new_decision.value,
+        reason=override.reason,
+        operator_id=override.operator_id,
+    )
+
+    if not success:
+        raise HTTPException(status_code=404, detail="Inspection not found or wrong org")
+
+    # Also update in-memory if present
+    if inspection_id in _inspections:
+        mem = _inspections[inspection_id]
+        if "evidence_record" in mem and mem["evidence_record"]:
+            if "overrides" not in mem["evidence_record"]:
+                mem["evidence_record"]["overrides"] = []
+            mem["evidence_record"]["overrides"].append({
+                "original_decision": original_decision,
+                "new_decision": override.new_decision.value,
+                "reason": override.reason,
+                "operator_id": override.operator_id,
+                "overridden_at": datetime.now(timezone.utc).isoformat(),
+            })
+        mem["outcome"] = {
+            "decision": override.new_decision.value,
+            "decided_by": override.operator_id,
+            "decided_at": datetime.now(timezone.utc).isoformat(),
+        }
+        mem["status"] = InspectionStatus.COMPLETED.value
+
+    return {
+        "inspection_id": inspection_id,
+        "original_decision": original_decision,
+        "new_decision": override.new_decision.value,
+        "overridden_by": override.operator_id,
+        "reason": override.reason,
+    }
+
+
+@router.get("/api/v1/health")
+async def health():
+    """Health check endpoint."""
+    return {"status": "healthy", "agent": "pack_manager", "version": "1.0.0"}

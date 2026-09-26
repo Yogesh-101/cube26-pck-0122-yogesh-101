@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Pack Manager{% endblock %}</title>
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --surface2: #242836;
+            --border: #2e3348;
+            --text: #e4e6f0;
+            --text-muted: #8b8fa3;
+            --accent: #6c8aff;
+            --seal: #22c55e;
+            --stop: #ef4444;
+            --uncertain: #f59e0b;
+            --pending: #6b7280;
+            --radius: 8px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+        header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 0;
+            margin-bottom: 24px;
+        }
+
+        header .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            margin-left: 24px;
+            font-size: 0.9rem;
+        }
+        nav a:hover { color: var(--text); }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .card h2 {
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+            color: var(--text);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .badge-seal { background: rgba(34,197,94,0.15); color: var(--seal); }
+        .badge-stop { background: rgba(239,68,68,0.15); color: var(--stop); }
+        .badge-uncertain { background: rgba(245,158,11,0.15); color: var(--uncertain); }
+        .badge-pending { background: rgba(107,114,128,0.15); color: var(--pending); }
+        .badge-pass { background: rgba(34,197,94,0.15); color: var(--seal); }
+        .badge-fail { background: rgba(239,68,68,0.15); color: var(--stop); }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        th, td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: var(--radius);
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.15s;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-seal {
+            background: var(--seal);
+            color: white;
+        }
+        .btn-stop {
+            background: var(--stop);
+            color: white;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-size: 0.9rem;
+            font-family: inherit;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .decision-banner {
+            padding: 20px;
+            border-radius: var(--radius);
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+        }
+        .decision-seal {
+            background: rgba(34,197,94,0.1);
+            border: 2px solid var(--seal);
+            color: var(--seal);
+        }
+        .decision-stop {
+            background: rgba(239,68,68,0.1);
+            border: 2px solid var(--stop);
+            color: var(--stop);
+        }
+        .decision-uncertain {
+            background: rgba(245,158,11,0.1);
+            border: 2px solid var(--uncertain);
+            color: var(--uncertain);
+        }
+        .decision-pending {
+            background: rgba(107,114,128,0.1);
+            border: 2px solid var(--pending);
+            color: var(--pending);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+        .spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .evidence-item {
+            padding: 12px;
+            background: var(--surface2);
+            border-radius: var(--radius);
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .section-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .override-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <a href="/" class="logo">Pack Manager</a>
+            <nav>
+                <a href="/">Dashboard</a>
+                <a href="/inspect">New Inspection</a>
+                <a href="/api/v1/health">API Health</a>
+            </nav>
+        </div>
+    </header>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

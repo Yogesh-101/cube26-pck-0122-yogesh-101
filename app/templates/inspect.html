@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}Pack Manager — New Inspection{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>New Pack Inspection</h2>
+    <p style="color: var(--text-muted); margin-bottom: 20px;">
+        Verify package contents before sealing. Upload photos and enter order details.
+    </p>
+
+    <form id="inspectForm" enctype="multipart/form-data">
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Order ID</label>
+                <input type="text" name="order_id" required placeholder="e.g. ORD-2026-001">
+            </div>
+            <div class="form-group">
+                <label>Unit ID</label>
+                <input type="text" name="unit_id" required placeholder="e.g. UNIT-0001">
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Organization ID</label>
+                <input type="text" name="org_id" required value="org_demo_alpha">
+            </div>
+            <div class="form-group">
+                <label>Channel</label>
+                <select name="channel" required>
+                    <option value="amazon_mfn">Amazon MFN</option>
+                    <option value="shopify">Shopify</option>
+                    <option value="walmart">Walmart</option>
+                    <option value="3pl_client">3PL Client</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Order Lines (one per row: SKU, Quantity)</label>
+            <div id="order-lines">
+                <div class="grid-2" style="margin-bottom: 8px;">
+                    <input type="text" placeholder="SKU (e.g. SKU-BLK-TSHIRT)" class="line-sku">
+                    <input type="number" min="1" value="1" class="line-qty">
+                </div>
+            </div>
+            <button type="button" onclick="addLine()" class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;margin-top:4px;">+ Add Line</button>
+        </div>
+
+        <div class="form-group">
+            <label>Package Photos</label>
+            <input type="file" name="images" accept="image/*" multiple required
+                   style="padding: 20px; border-style: dashed;">
+        </div>
+
+        <div class="form-group">
+            <label>Catalogue (optional, JSON)</label>
+            <textarea name="catalogue_json" rows="3" placeholder='[{"sku": "SKU-BLK-TSHIRT", "name": "Black T-Shirt"}]'>[]</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="submitBtn">Verify Package</button>
+        <div id="status" style="margin-top: 16px;"></div>
+    </form>
+</div>
+
+<div id="result-preview" style="display:none;">
+    <!-- Results rendered here after submission -->
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function addLine() {
+    const container = document.getElementById('order-lines');
+    const div = document.createElement('div');
+    div.className = 'grid-2';
+    div.style.marginBottom = '8px';
+    div.innerHTML = `
+        <input type="text" placeholder="SKU" class="line-sku">
+        <input type="number" min="1" value="1" class="line-qty">
+    `;
+    container.appendChild(div);
+}
+
+document.getElementById('inspectForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    const status = document.getElementById('status');
+
+    btn.disabled = true;
+    btn.textContent = 'Analyzing...';
+    status.innerHTML = '<div class="loading"><div class="spinner"></div><br>Sending images to AI for analysis...</div>';
+
+    const form = e.target;
+    const formData = new FormData();
+
+    // Collect order lines
+    const skus = form.querySelectorAll('.line-sku');
+    const qtys = form.querySelectorAll('.line-qty');
+    const orderLines = [];
+    skus.forEach((el, i) => {
+        if (el.value.trim()) {
+            orderLines.push({ sku: el.value.trim(), quantity: parseInt(qtys[i].value) || 1 });
+        }
+    });
+
+    if (!orderLines.length) {
+        status.innerHTML = '<p style="color:var(--stop)">Add at least one order line.</p>';
+        btn.disabled = false;
+        btn.textContent = 'Verify Package';
+        return;
+    }
+
+    formData.append('order_id', form.order_id.value);
+    formData.append('unit_id', form.unit_id.value);
+    formData.append('org_id', form.org_id.value);
+    formData.append('channel', form.channel.value);
+    formData.append('order_lines_json', JSON.stringify(orderLines));
+    formData.append('catalogue_json', form.catalogue_json.value || '[]');
+
+    const files = form.querySelector('[name="images"]').files;
+    for (const file of files) {
+        formData.append('images', file);
+    }
+
+    try {
+        const res = await fetch('/api/v1/verify/json', { method: 'POST', body: formData });
+        const data = await res.json();
+
+        if (!res.ok) {
+            status.innerHTML = `<p style="color:var(--stop)">Error: ${data.detail || JSON.stringify(data)}</p>`;
+            btn.disabled = false;
+            btn.textContent = 'Verify Package';
+            return;
+        }
+
+        // Redirect to results page
+        window.location.href = `/results/${data.inspection_id}`;
+    } catch (err) {
+        status.innerHTML = `<p style="color:var(--stop)">Request failed: ${err.message}</p>`;
+        btn.disabled = false;
+        btn.textContent = 'Verify Package';
+    }
+});
+</script>
+{% endblock %}
