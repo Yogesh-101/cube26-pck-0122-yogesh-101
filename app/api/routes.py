@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import shutil
 import uuid
 from datetime import datetime, timezone
@@ -48,6 +49,30 @@ _inspections: dict[str, dict] = {}
 
 # Initialize database on module load
 init_database()
+
+_UNSAFE_PATH_CHARS = re.compile(r"[^A-Za-z0-9._-]+")
+
+
+def tenant_image_dir(storage_root: str | Path, org_id: str, unit_id: str) -> Path:
+    """
+    Place captures under storage/<org>/<unit>.
+
+    A shared folder keyed only by unit id lets two tenants collide, and a
+    raw id with `..` can escape the storage root. The resolved path is
+    required to stay inside the storage root.
+    """
+
+    def segment(value: str, label: str) -> str:
+        cleaned = _UNSAFE_PATH_CHARS.sub("_", value).strip("._")
+        if not cleaned:
+            raise HTTPException(status_code=400, detail=f"Invalid {label}")
+        return cleaned
+
+    root = Path(storage_root).resolve()
+    dest = (root / segment(org_id, "org_id") / segment(unit_id, "unit_id")).resolve()
+    if dest != root and root not in dest.parents:
+        raise HTTPException(status_code=400, detail="Invalid storage path")
+    return dest
 
 
 # ---------------------------------------------------------------------------
@@ -109,7 +134,7 @@ async def verify_package(
         raise HTTPException(status_code=422, detail=f"Invalid order data: {e}")
 
     # Save uploaded images
-    image_dir = Path(settings.image_storage_path) / req.unit_id
+    image_dir = tenant_image_dir(settings.image_storage_path, req.org_id, req.unit_id)
     image_dir.mkdir(parents=True, exist_ok=True)
 
     image_paths = []
@@ -190,7 +215,7 @@ async def verify_package_json(
         catalogue = []
 
     # Save uploaded images
-    image_dir = Path(settings.image_storage_path) / unit_id
+    image_dir = tenant_image_dir(settings.image_storage_path, org_id, unit_id)
     image_dir.mkdir(parents=True, exist_ok=True)
 
     image_paths = []
@@ -247,7 +272,19 @@ async def get_inspection(inspection_id: str, org_id: str = Query(...)):
         if not data or data.get("order", {}).get("org_id") != org_id:
             raise HTTPException(status_code=404, detail="Inspection not found")
 
-    return data
+    # Overrides are stored append-only in their own table, so `outcome` still holds
+    # the agent's original verdict. Return both: the operator UI must be able to show
+    # the decision currently in force without that erasing what the agent said.
+    overrides = db_get_overrides(inspection_id, org_id)
+    if not overrides and data.get("evidence_record"):
+        overrides = data["evidence_record"].get("overrides", [])
+
+    outcome = data.get("outcome") or {}
+    return {
+        **data,
+        "overrides": overrides,
+        "current_decision": overrides[-1]["new_decision"] if overrides else outcome.get("decision"),
+    }
 
 
 @router.get("/api/v1/inspections")
@@ -288,7 +325,10 @@ async def override_decision(
         if not data or data.get("order", {}).get("org_id") != org_id:
             raise HTTPException(status_code=404, detail="Inspection not found")
 
-    original_decision = data.get("outcome", {}).get("decision", "stop_and_fix") if data.get("outcome") else "stop_and_fix"
+    # Keep the agent's actual verdict. A pending capture has none — do not
+    # invent STOP & FIX as if the model had decided.
+    outcome = data.get("outcome") or {}
+    original_decision = outcome.get("decision") or "pending"
 
     # Save override to DB
     success = db_save_override(
@@ -316,11 +356,8 @@ async def override_decision(
                 "operator_id": override.operator_id,
                 "overridden_at": datetime.now(timezone.utc).isoformat(),
             })
-        mem["outcome"] = {
-            "decision": override.new_decision.value,
-            "decided_by": override.operator_id,
-            "decided_at": datetime.now(timezone.utc).isoformat(),
-        }
+        # outcome stays the agent's original verdict. The decision in force
+        # is the append-only override, not a rewrite of that object.
         mem["status"] = InspectionStatus.COMPLETED.value
 
     return {

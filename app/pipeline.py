@@ -174,6 +174,20 @@ def _build_pending_inspection(
     """
     now = datetime.now(timezone.utc)
 
+    # The reason must live on the inspection itself. Persisting it only inside
+    # the evidence record leaves Inspection.checks empty, so the UI reports
+    # "Checks run 0" and cannot show why the verdict was withheld.
+    pending_checks = [
+        Check(
+            check_key=CheckKey.IMAGE_QUALITY,
+            verdict=Verdict.UNCERTAIN,
+            confidence=0.0,
+            detail=reason,
+            model_version="",
+            latency_ms=0.0,
+        ),
+    ]
+
     evidence = EvidenceRecord(
         organization_id=order.org_id,
         subject=order.unit_id,
@@ -182,16 +196,7 @@ def _build_pending_inspection(
             ImageRef(image_id=img.image_id, path=img.path, sha256=img.sha256, captured_at=now)
             for img in image_inputs
         ],
-        checks=[
-            Check(
-                check_key=CheckKey.IMAGE_QUALITY,
-                verdict=Verdict.UNCERTAIN,
-                confidence=0.0,
-                detail=reason,
-                model_version="",
-                latency_ms=0.0,
-            ),
-        ],
+        checks=pending_checks,
         status=InspectionStatus.PENDING,
         order_id=order.order_id,
         expected_lines=order.lines,
@@ -202,6 +207,7 @@ def _build_pending_inspection(
         order=order,
         catalogue=catalogue,
         images=image_inputs,
+        checks=pending_checks,
         status=InspectionStatus.PENDING,
         evidence_record=evidence,
     )

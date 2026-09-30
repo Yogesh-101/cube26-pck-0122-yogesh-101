@@ -40,6 +40,8 @@ class Settings(BaseModel):
     image_quality_brightness_max: float = Field(default=250.0)
     max_image_size_mb: int = Field(default=20)
     vlm_timeout_seconds: int = Field(default=60)
+    vlm_max_retries: int = Field(default=2)
+    vlm_retry_base_seconds: float = Field(default=1.0)
 
 
 @lru_cache
@@ -61,4 +63,6 @@ def get_settings() -> Settings:
         database_url=os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./pack_manager.db"),
         image_storage_path=os.getenv("IMAGE_STORAGE_PATH", "./storage/images"),
         secret_key=os.getenv("SECRET_KEY", "change-me-in-production"),
+        vlm_max_retries=int(os.getenv("VLM_MAX_RETRIES", "2")),
+        vlm_retry_base_seconds=float(os.getenv("VLM_RETRY_BASE_SECONDS", "1.0")),
     )

@@ -1,205 +1,570 @@
 {% extends "base.html" %}
-{% block title %}Pack Manager — Inspection Results{% endblock %}
+{% block title %}Inspection results — Pack Manager{% endblock %}
+
+{% block head %}
+<style>
+    /* Confidence meter. The track stays neutral; the fill and the numeral take
+       the status colour so the number is readable without the bar. */
+    .conf {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 96px;
+    }
+    .conf .bar { flex: 1; min-width: 44px; background: var(--surface3); }
+    .conf span {
+        font-size: 0.78rem;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        min-width: 34px;
+        text-align: right;
+    }
+    .conf-high .bar > i { background: var(--seal); }
+    .conf-high span { color: var(--seal); }
+    .conf-mid .bar > i { background: var(--uncertain); }
+    .conf-mid span { color: var(--uncertain); }
+    .conf-low .bar > i { background: var(--stop); }
+    .conf-low span { color: var(--stop); }
+
+    .check-row { display: flex; align-items: flex-start; gap: 14px; padding: 15px 0; border-bottom: 1px solid var(--ink-100); }
+    .check-row:last-child { border-bottom: none; }
+    .check-main { flex: 1; min-width: 0; }
+    .check-name { font-family: var(--font-display); font-weight: 700; font-size: 0.9375rem; color: #fff; letter-spacing: -0.015em; }
+    .check-detail { color: var(--ink-400); font-size: 0.85rem; margin-top: 3px; }
+    .check-side { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+
+    .unc-grid { display: grid; grid-template-columns: 148px minmax(0, 1fr); gap: 5px 16px; font-size: 0.85rem; margin-top: 10px; }
+    .unc-grid dt {
+        color: var(--ink-400);
+        font-weight: 700;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        padding-top: 2px;
+    }
+    .unc-grid dd { color: var(--text); }
+    .unc-grid dd.action { color: var(--brand-300); font-weight: 600; }
+
+    .unc-item {
+        border-color: var(--uncertain-edge);
+        border-left-color: var(--uncertain);
+        background: var(--uncertain-soft);
+    }
+
+    .diff-icon { width: 15px; height: 15px; vertical-align: -2px; color: var(--ink-300); }
+
+    .empty-icon.is-stop { background: var(--stop-soft); border-color: var(--stop-edge); color: var(--stop); }
+
+    .qty-off { color: var(--stop); font-weight: 700; }
+    .msg-ok { color: var(--seal); font-weight: 600; }
+    .msg-bad { color: var(--stop); font-weight: 600; }
+
+    .db-meta { text-align: right; }
+
+    @media (max-width: 720px) {
+        .check-row { flex-direction: column; gap: 9px; }
+        .check-side { width: 100%; justify-content: space-between; }
+        .unc-grid { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+        .unc-grid dd { margin-bottom: 8px; }
+
+        /* Let the unit/order meta drop below the verdict instead of squeezing
+           the label into a two-word-per-line column. */
+        .decision-banner { flex-wrap: wrap; }
+        .decision-banner .spacer { display: none; }
+        .db-meta { width: 100%; text-align: left; white-space: normal; }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div id="results-container">
-    <div class="loading"><div class="spinner"></div><br>Loading inspection results...</div>
+    <div class="skeleton" style="height: 88px;"></div>
+    <div class="skeleton" style="height: 220px;"></div>
+    <div class="skeleton" style="height: 160px;"></div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
 const inspectionId = "{{ inspection_id }}";
+const esc = window.PCK.esc;
+const titleise = window.PCK.titleise;
 
-async function loadResults() {
-    const container = document.getElementById('results-container');
-    const orgId = new URLSearchParams(window.location.search).get('org_id') || 'org_demo_alpha';
+function pct(value) { return Math.round((Number(value) || 0) * 100); }
 
-    try {
-        const res = await fetch(`/api/v1/inspections/${inspectionId}?org_id=${encodeURIComponent(orgId)}`);
-        if (!res.ok) {
-            container.innerHTML = '<div class="card"><p style="color:var(--stop)">Inspection not found. Check org_id.</p></div>';
-            return;
-        }
-        const data = await res.json();
-        renderResults(data, container, orgId);
-    } catch (err) {
-        container.innerHTML = `<div class="card"><p style="color:var(--stop)">Error: ${err.message}</p></div>`;
+function confBand(value) {
+    if (value >= 0.7) return 'conf-high';
+    if (value >= 0.5) return 'conf-mid';
+    return 'conf-low';
+}
+
+function confCell(value) {
+    const p = pct(value);
+    return `<div class="conf ${confBand(value)}" title="Model confidence ${p}%">
+        <div class="bar"><i style="width:${p}%"></i></div>
+        <span>${p}%</span>
+    </div>`;
+}
+
+/* Join expected order lines against what the model observed, so the operator
+   reads one reconciliation instead of comparing two tables by eye. */
+function reconcile(expected, observed) {
+    const rows = [];
+    const bySku = new Map();
+    for (const item of observed) {
+        if (!item.sku) continue;
+        const bucket = bySku.get(item.sku) || { qty: 0, conf: [], names: [] };
+        bucket.qty += Number(item.observed_quantity) || 0;
+        bucket.conf.push(Number(item.confidence) || 0);
+        bucket.names.push(item.name);
+        bySku.set(item.sku, bucket);
     }
+
+    const matchedSkus = new Set();
+    for (const line of expected) {
+        const found = bySku.get(line.sku);
+        matchedSkus.add(line.sku);
+        const observedQty = found ? found.qty : 0;
+        const confidence = found && found.conf.length ? Math.min(...found.conf) : null;
+
+        let state = 'match';
+        if (observedQty === 0) state = 'missing';
+        else if (observedQty < line.quantity) state = 'short';
+        else if (observedQty > line.quantity) state = 'over';
+
+        rows.push({
+            sku: line.sku,
+            name: found ? found.names[0] : null,
+            expected: line.quantity,
+            observed: observedQty,
+            confidence,
+            state,
+        });
+    }
+
+    for (const item of observed) {
+        if (item.sku && matchedSkus.has(item.sku)) continue;
+        rows.push({
+            sku: item.sku,
+            name: item.name,
+            expected: 0,
+            observed: Number(item.observed_quantity) || 0,
+            confidence: Number(item.confidence) || 0,
+            state: item.sku ? 'extra' : 'unknown',
+        });
+    }
+
+    return rows;
+}
+
+const STATE_META = {
+    match:      { label: 'Match',      cls: 'seal',      note: 'Expected quantity observed' },
+    missing:    { label: 'Missing',    cls: 'stop',      note: 'Expected but not seen in the photos' },
+    unverified: { label: 'Not checked', cls: 'pending',  note: 'No verdict was produced — the model never assessed this line' },
+    short:   { label: 'Short',      cls: 'stop',      note: 'Fewer units observed than ordered' },
+    over:    { label: 'Over',       cls: 'stop',      note: 'More units observed than ordered' },
+    extra:   { label: 'Extra',      cls: 'stop',      note: 'In the box but not on the order' },
+    unknown: { label: 'Unknown',    cls: 'uncertain', note: 'Detected but not matched to any SKU' },
+};
+
+function renderUncertainty(u) {
+    return `<div class="evidence-item unc-item">
+        <div class="row" style="gap:10px;">
+            <span class="badge badge-uncertain">${esc(titleise(u.reason_code))}</span>
+        </div>
+        <dl class="unc-grid">
+            <dt>Known</dt><dd>${esc(u.what_is_known) || '—'}</dd>
+            <dt>Not known</dt><dd>${esc(u.what_is_unknown) || '—'}</dd>
+            <dt>Missing evidence</dt><dd>${esc(u.missing_evidence) || '—'}</dd>
+            <dt>Recommended action</dt><dd class="action">${esc(u.recommended_action) || '—'}</dd>
+        </dl>
+    </div>`;
 }
 
 function renderResults(data, container, orgId) {
     const order = data.order || {};
     const outcome = data.outcome || {};
-    const checks = data.checks || [];
     const observed = data.observed_items || [];
     const evidence = data.evidence_record || {};
-    const overrides = evidence.overrides || [];
 
-    const decision = outcome.decision || 'pending';
-    const decClass = decision === 'seal' ? 'decision-seal' :
-                     decision === 'stop_and_fix' ? 'decision-stop' :
-                     data.status === 'pending_review' ? 'decision-uncertain' : 'decision-pending';
-    const decLabel = decision === 'seal' ? 'SEAL' :
-                     decision === 'stop_and_fix' ? 'STOP & FIX' : 'PENDING';
+    /* On the fail-open path the explanatory check is written to the evidence
+       record only, so the top-level list arrives empty and the operator would
+       see "PENDING" with no stated cause. Fall back to the record's own checks
+       so the tally, the pending callout and the per-check rows all have data. */
+    const checks = (data.checks && data.checks.length) ? data.checks : (evidence.checks || []);
+
+    const overrides = data.overrides || evidence.overrides || [];
+    const uncertainties = evidence.uncertainties || [];
+    const images = data.images || evidence.images || [];
+    const expected = order.lines || [];
+
+    /* `outcome` always holds the agent's original verdict. When an operator has
+       overridden it, the decision in force is the latest override. */
+    const overriddenByHuman = overrides.length > 0;
+    const effective = data.current_decision || outcome.decision;
+    const d = window.PCK.presentDecision(effective, overriddenByHuman ? 'completed' : data.status);
+    const agentVerdict = window.PCK.presentDecision(outcome.decision, data.status);
+
+    const passed = checks.filter(c => c.verdict === 'pass').length;
+    const failed = checks.filter(c => c.verdict === 'fail').length;
+    const unsure = checks.filter(c => c.verdict === 'uncertain').length;
+    const rows = reconcile(expected, observed);
+
+    /* Nothing was observed because the model never ran. Calling those lines "missing"
+       would report a discrepancy the agent never actually found. */
+    if (data.status === 'pending') {
+        rows.forEach(row => { row.state = 'unverified'; });
+    }
 
     let html = '';
 
-    // Decision Banner
-    html += `<div class="decision-banner ${decClass}">${decLabel}</div>`;
-
-    // Summary
-    html += `<div class="card">
-        <h2>Inspection Summary</h2>
-        <table>
-            <tr><td style="color:var(--text-muted);width:160px">Order ID</td><td>${order.order_id || '-'}</td></tr>
-            <tr><td style="color:var(--text-muted)">Unit ID</td><td>${order.unit_id || '-'}</td></tr>
-            <tr><td style="color:var(--text-muted)">Organization</td><td>${order.org_id || '-'}</td></tr>
-            <tr><td style="color:var(--text-muted)">Channel</td><td>${order.channel || '-'}</td></tr>
-            <tr><td style="color:var(--text-muted)">Status</td><td>${data.status || '-'}</td></tr>
-            <tr><td style="color:var(--text-muted)">Evidence Record</td><td style="font-family:monospace;font-size:0.8rem">${evidence.record_id || '-'}</td></tr>
-            <tr><td style="color:var(--text-muted)">Content Hash</td><td style="font-family:monospace;font-size:0.75rem;word-break:break-all">${evidence.content_hash || '-'}</td></tr>
-        </table>
+    /* ---- Decision banner ---- */
+    html += `<div class="decision-banner decision-${d.cls}">
+        <span class="db-icon">${window.PCK.icon(d.key, 26)}</span>
+        <div style="min-width:0;">
+            <div class="db-label">${d.label}</div>
+            <div class="db-sub">${esc(d.blurb)}</div>
+        </div>
+        <span class="spacer"></span>
+        <div class="hint nowrap db-meta">
+            <div>Unit <strong class="mono" style="color:#fff">${esc(order.unit_id) || '—'}</strong></div>
+            <div>Order <span class="mono">${esc(order.order_id) || '—'}</span></div>
+        </div>
     </div>`;
 
-    // Expected vs Observed
-    const lines = order.lines || [];
-    html += `<div class="grid-2">`;
+    /* Fail-open: the capture is saved but no verdict exists. The reason lives in the
+       check detail, which is too far down the page for something this blocking. */
+    if (data.status === 'pending') {
+        const reason = (checks.find(c => c.detail) || {}).detail;
+        html += `<div class="callout callout-warn" style="margin-bottom:18px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+            <span><strong>No verdict was produced, so nothing here has been verified.</strong>
+            The photos and the order were still saved — the pack line is never blocked on the model.
+            ${reason ? `<br><span class="hint">Reported reason: <span class="mono">${esc(reason)}</span></span>` : ''}
+            <br><span class="hint">Re-run the inspection once the vision model is reachable, then judge this unit by eye in the meantime.</span></span>
+        </div>`;
+    }
 
-    // Expected
-    html += `<div class="card"><h2>Expected (Order)</h2>`;
-    if (lines.length) {
-        html += '<table><thead><tr><th>SKU</th><th>Qty</th></tr></thead><tbody>';
-        for (const l of lines) {
-            html += `<tr><td>${l.sku}</td><td>${l.quantity}</td></tr>`;
-        }
-        html += '</tbody></table>';
+    if (overriddenByHuman) {
+        const last = overrides[overrides.length - 1];
+        html += `<div class="callout callout-info" style="margin-bottom:18px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M21 3 3 21"/></svg>
+            <span><strong>An operator set this outcome, not the agent.</strong>
+            The agent returned <strong>${agentVerdict.label}</strong>;
+            <span class="mono">${esc(last.operator_id)}</span> changed it to <strong>${d.label}</strong>.
+            Both verdicts are kept — see the override history below.</span>
+        </div>`;
+    }
+
+    /* ---- Check tally ---- */
+    html += `<div class="grid-4" style="margin-bottom:18px;">
+        <div class="stat"><div class="stat-label">Checks run</div><div class="stat-value">${checks.length}</div><div class="stat-sub">one batched model call</div></div>
+        <div class="stat is-seal"><div class="stat-label">Passed</div><div class="stat-value">${passed}</div><div class="stat-sub">evidence supports a pass</div></div>
+        <div class="stat is-stop"><div class="stat-label">Failed</div><div class="stat-value">${failed}</div><div class="stat-sub">discrepancy confirmed</div></div>
+        <div class="stat is-uncertain"><div class="stat-label">Uncertain</div><div class="stat-value">${unsure}</div><div class="stat-sub">declined to judge</div></div>
+    </div>`;
+
+    /* ---- Uncertainty first: it is what the operator must act on ---- */
+    if (uncertainties.length) {
+        html += `<div class="card">
+            <div class="card-head">
+                <h2>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.2-3 4M12 17h.01"/></svg>
+                    Why the agent is unsure
+                </h2>
+                <span class="badge badge-uncertain">${uncertainties.length} reason${uncertainties.length === 1 ? '' : 's'}</span>
+            </div>
+            <p class="hint" style="margin-bottom:14px;">Uncertain is a verdict in its own right, not a weak pass.
+               Each entry says what is known, what is not, and what would settle it.</p>
+            ${uncertainties.map(renderUncertainty).join('')}
+        </div>`;
+    }
+
+    /* ---- Reconciliation ---- */
+    html += `<div class="card">
+        <div class="card-head">
+            <h2>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h13M3 12h9M3 18h13"/><path d="m18 15 3 3-3 3"/></svg>
+                Ordered vs. observed
+            </h2>
+            <span class="hint">${expected.length} line(s) ordered · ${observed.length} item group(s) detected</span>
+        </div>`;
+
+    if (!rows.length) {
+        html += `<p class="muted">Nothing to reconcile — no order lines and no detected items.</p>`;
     } else {
-        html += '<p style="color:var(--text-muted)">No order lines</p>';
+        html += `<div class="table-wrap"><table>
+            <thead><tr>
+                <th>SKU</th><th>Detected as</th><th class="num">Ordered</th><th class="num">Observed</th>
+                <th>Confidence</th><th>Result</th>
+            </tr></thead><tbody>`;
+        for (const row of rows) {
+            const meta = STATE_META[row.state];
+            html += `<tr>
+                <td class="mono nowrap">${row.sku ? esc(row.sku) : '<span class="muted">unmatched</span>'}</td>
+                <td>${row.name ? esc(row.name) : '<span class="muted">not detected</span>'}</td>
+                <td class="num">${row.expected}</td>
+                <td class="num ${row.state !== 'unverified' && row.observed !== row.expected ? 'qty-off' : ''}">${row.state === 'unverified' ? '<span class="faint">—</span>' : row.observed}</td>
+                <td>${row.confidence === null ? '<span class="faint">—</span>' : confCell(row.confidence)}</td>
+                <td><span class="badge badge-${meta.cls}" title="${esc(meta.note)}">${meta.label}</span></td>
+            </tr>`;
+        }
+        html += `</tbody></table></div>`;
     }
     html += `</div>`;
 
-    // Observed
-    html += `<div class="card"><h2>Observed (AI Detection)</h2>`;
-    if (observed.length) {
-        html += '<table><thead><tr><th>Product</th><th>SKU</th><th>Qty</th><th>Confidence</th></tr></thead><tbody>';
-        for (const o of observed) {
-            const conf = (o.confidence * 100).toFixed(0);
-            const confColor = o.confidence >= 0.7 ? 'var(--seal)' : o.confidence >= 0.5 ? 'var(--uncertain)' : 'var(--stop)';
-            html += `<tr>
-                <td>${o.name}</td>
-                <td>${o.sku || '<em style="color:var(--text-muted)">unknown</em>'}</td>
-                <td>${o.observed_quantity}</td>
-                <td style="color:${confColor}">${conf}%</td>
-            </tr>`;
-        }
-        html += '</tbody></table>';
+    /* ---- Checks ---- */
+    html += `<div class="card">
+        <h2>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            Verification checks
+        </h2>`;
+
+    if (!checks.length) {
+        html += `<p class="muted">No checks were recorded for this inspection.</p>`;
     } else {
-        html += '<p style="color:var(--text-muted)">No items detected</p>';
+        for (const c of checks) {
+            const cls = c.verdict === 'pass' ? 'pass' : c.verdict === 'fail' ? 'fail' : 'uncertain';
+            html += `<div class="check-row">
+                <div class="check-main">
+                    <div class="check-name">${esc(titleise(c.check_key))}</div>
+                    <div class="check-detail">${esc(c.detail) || '<span class="muted">No detail recorded.</span>'}</div>
+                    ${c.uncertainty ? renderUncertainty(c.uncertainty) : ''}
+                </div>
+                <div class="check-side">
+                    ${confCell(c.confidence)}
+                    <span class="badge badge-${cls}">${esc(String(c.verdict).toUpperCase())}</span>
+                </div>
+            </div>`;
+        }
     }
-    html += `</div></div>`;
+    html += `</div>`;
 
-    // Checks
-    html += `<div class="card"><h2>Verification Checks</h2>`;
-    html += '<table><thead><tr><th>Check</th><th>Verdict</th><th>Confidence</th><th>Detail</th></tr></thead><tbody>';
-    for (const c of checks) {
-        const badgeClass = c.verdict === 'pass' ? 'badge-pass' :
-                          c.verdict === 'fail' ? 'badge-fail' : 'badge-uncertain';
-        const vLabel = c.verdict.toUpperCase();
-        html += `<tr>
-            <td>${c.check_key.replace(/_/g, ' ').toUpperCase()}</td>
-            <td><span class="badge ${badgeClass}">${vLabel}</span></td>
-            <td>${(c.confidence * 100).toFixed(0)}%</td>
-            <td style="font-size:0.85rem;color:var(--text-muted)">${c.detail}</td>
-        </tr>`;
-    }
-    html += '</tbody></table></div>';
+    /* ---- Record + override, side by side ---- */
+    html += `<div class="grid-sidebar">`;
 
-    // Overrides
+    /* Override panel */
+    html += `<div class="card card-accent">
+        <h2>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+            Operator override
+        </h2>
+        <p class="hint" style="margin-bottom:16px;">
+            Disagree with the agent? Record your call here. The original verdict, your new verdict, your ID and
+            your reason are all kept — nothing is overwritten.
+        </p>
+        <form id="overrideForm">
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="override-decision">New decision <span class="req">*</span></label>
+                    <select id="override-decision" required>
+                        <option value="stop_and_fix" ${d.key === 'seal' ? 'selected' : ''}>STOP &amp; FIX — do not seal</option>
+                        <option value="seal" ${d.key !== 'seal' ? 'selected' : ''}>SEAL — cleared to close</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="override-operator">Your operator ID <span class="req">*</span></label>
+                    <input id="override-operator" type="text" required placeholder="OP-001" autocomplete="off">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="override-reason">Reason <span class="req">*</span></label>
+                <textarea id="override-reason" required rows="3"
+                          placeholder="What did you see that the agent did not? e.g. 'Second t-shirt was under the packing slip, not visible in the photos.'"></textarea>
+            </div>
+            <div class="row">
+                <button type="submit" class="btn btn-primary" id="overrideBtn">Record override</button>
+                <span id="override-status" aria-live="polite" class="hint"></span>
+            </div>
+        </form>`;
+
     if (overrides.length) {
-        html += `<div class="card"><h2>Human Overrides</h2>`;
+        html += `<div class="override-section">
+            <div class="section-title">Override history (${overrides.length})</div>`;
         for (const o of overrides) {
+            const from = window.PCK.presentDecision(o.original_decision, 'completed');
+            const to = window.PCK.presentDecision(o.new_decision, 'completed');
             html += `<div class="evidence-item">
-                <strong>${o.original_decision}</strong> &rarr; <strong>${o.new_decision}</strong>
-                by ${o.operator_id}<br>
-                <span style="color:var(--text-muted);font-size:0.85rem">Reason: ${o.reason}</span>
+                <div class="row" style="gap:8px;">
+                    <span class="badge badge-${from.cls}">${from.label}</span>
+                    <svg class="diff-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    <span class="badge badge-${to.cls}">${to.label}</span>
+                    <span class="spacer"></span>
+                    <span class="hint mono">${esc(o.operator_id)}</span>
+                </div>
+                <p style="margin-top:9px;font-size:0.875rem;">${esc(o.reason)}</p>
+                ${o.overridden_at ? `<p class="hint" style="margin-top:5px;">${esc(o.overridden_at)}</p>` : ''}
             </div>`;
         }
         html += `</div>`;
     }
+    html += `</div>`;
 
-    // Override section
-    if (decision !== 'seal' || data.status === 'pending_review') {
-        html += `<div class="card">
-            <h2>Operator Override</h2>
-            <p style="color:var(--text-muted);margin-bottom:16px;">
-                Override the AI decision. The original decision is preserved in the evidence record.
-            </p>
-            <form id="overrideForm">
-                <div class="grid-2">
-                    <div class="form-group">
-                        <label>New Decision</label>
-                        <select id="override-decision">
-                            <option value="seal">SEAL</option>
-                            <option value="stop_and_fix">STOP & FIX</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Operator ID</label>
-                        <input type="text" id="override-operator" required placeholder="e.g. OP-001">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Reason</label>
-                    <textarea id="override-reason" required rows="2" placeholder="Explain why you are overriding the AI decision..."></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary">Submit Override</button>
-                <span id="override-status" style="margin-left:16px;"></span>
-            </form>
-        </div>`;
-    }
+    /* Record metadata */
+    html += `<div>
+        <div class="card">
+            <h2>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+                Evidence record
+            </h2>
+            <div class="table-wrap">
+                <table class="kv"><tbody>
+                    <tr><td>Record ID</td><td class="mono" style="color:var(--blue-300)">${esc(evidence.record_id) || '—'}</td></tr>
+                    <tr><td>Organisation</td><td class="mono">${esc(order.org_id) || '—'}</td></tr>
+                    <tr><td>Channel</td><td>${esc(titleise(order.channel)) || '—'}</td></tr>
+                    <tr><td>Status</td><td><span class="badge badge-${d.cls}">${esc(titleise(data.status))}</span></td></tr>
+                    <tr><td>Agent verdict</td><td><span class="badge badge-${agentVerdict.cls}">${agentVerdict.label}</span></td></tr>
+                    <tr><td>Decided by</td><td class="mono">${overriddenByHuman ? esc(overrides[overrides.length - 1].operator_id) : (esc(outcome.decided_by) || '—')}</td></tr>
+                    <tr><td>Captured</td><td class="hint">${esc(evidence.captured_at) || '—'}</td></tr>
+                    <tr><td>Photos</td><td>${images.length}</td></tr>
+                    <tr><td>Schema</td><td class="mono">${esc(evidence.schema_version) || '—'}</td></tr>
+                </tbody></table>
+            </div>
 
-    // Evidence JSON
-    html += `<div class="card">
-        <h2>Raw Evidence Record</h2>
-        <details>
-            <summary style="cursor:pointer;color:var(--accent);margin-bottom:8px;">Show/Hide JSON</summary>
-            <pre style="background:var(--surface2);padding:16px;border-radius:var(--radius);overflow-x:auto;font-size:0.8rem;max-height:400px;overflow-y:auto;">${JSON.stringify(evidence, null, 2)}</pre>
-        </details>
+            <div class="section-title" style="margin-top:18px;">Content hash (SHA-256)</div>
+            <button type="button" class="copy-chip" id="hashChip" title="Copy hash">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>
+                <span>${esc(evidence.content_hash) || '—'}</span>
+            </button>
+            <p class="hint" style="margin-top:9px;">Hash over the record's canonical JSON. It detects accidental
+               change; it is not an anchored or tamper-proof log.</p>
+        </div>
+
+        <div class="card">
+            <h2>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg>
+                Raw JSON
+            </h2>
+            <div class="btn-row" style="margin-bottom:12px;">
+                <button type="button" class="btn btn-ghost btn-sm" id="copyJson">Copy</button>
+                <a class="btn btn-ghost btn-sm" id="downloadJson"
+                   href="/api/v1/inspections/${encodeURIComponent(inspectionId)}/evidence?org_id=${encodeURIComponent(orgId)}"
+                   target="_blank" rel="noopener">Open API response</a>
+            </div>
+            <details>
+                <summary>Show evidence record</summary>
+                <pre class="json" id="jsonBlock">${esc(JSON.stringify(evidence, null, 2))}</pre>
+            </details>
+        </div>
+
+        <div class="card">
+            <h2>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                Next
+            </h2>
+            <div class="btn-row">
+                <a href="/inspect" class="btn btn-primary btn-sm">Inspect another unit</a>
+                <a href="/" class="btn btn-ghost btn-sm">Back to dashboard</a>
+            </div>
+        </div>
     </div>`;
+
+    html += `</div>`;
 
     container.innerHTML = html;
 
-    // Attach override handler
+    /* ---- Behaviour ---- */
+    const hashChip = document.getElementById('hashChip');
+    if (hashChip && evidence.content_hash) {
+        hashChip.addEventListener('click', () => window.PCK.copy(evidence.content_hash, 'Content hash copied'));
+    }
+
+    const copyJson = document.getElementById('copyJson');
+    if (copyJson) {
+        copyJson.addEventListener('click', () =>
+            window.PCK.copy(JSON.stringify(evidence, null, 2), 'Evidence JSON copied'));
+    }
+
     const overrideForm = document.getElementById('overrideForm');
     if (overrideForm) {
         overrideForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const statusEl = document.getElementById('override-status');
+            const btn = document.getElementById('overrideBtn');
+            const reason = document.getElementById('override-reason').value.trim();
+            const operator = document.getElementById('override-operator').value.trim();
+
+            if (!reason || !operator) {
+                statusEl.innerHTML = '<span class="msg-bad">Operator ID and reason are both required.</span>';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;"></span> Saving…';
+            statusEl.textContent = '';
+
             try {
-                const res = await fetch(`/api/v1/inspections/${inspectionId}/override?org_id=${encodeURIComponent(orgId)}`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        new_decision: document.getElementById('override-decision').value,
-                        reason: document.getElementById('override-reason').value,
-                        operator_id: document.getElementById('override-operator').value,
-                    })
-                });
+                const res = await fetch(
+                    `/api/v1/inspections/${encodeURIComponent(inspectionId)}/override?org_id=${encodeURIComponent(orgId)}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            new_decision: document.getElementById('override-decision').value,
+                            reason,
+                            operator_id: operator,
+                        }),
+                    }
+                );
+
                 if (res.ok) {
-                    statusEl.innerHTML = '<span style="color:var(--seal)">Override saved. Reloading...</span>';
-                    setTimeout(() => location.reload(), 1000);
+                    window.PCK.toast('Override recorded — original verdict preserved', 'seal');
+                    statusEl.innerHTML = '<span class="msg-ok">Saved. Reloading…</span>';
+                    setTimeout(() => location.reload(), 900);
                 } else {
-                    const err = await res.json();
-                    statusEl.innerHTML = `<span style="color:var(--stop)">Error: ${err.detail}</span>`;
+                    const err = await res.json().catch(() => ({}));
+                    statusEl.innerHTML = `<span class="msg-bad">${esc(err.detail || 'Request failed (' + res.status + ')')}</span>`;
+                    btn.disabled = false;
+                    btn.textContent = 'Record override';
                 }
             } catch (err) {
-                statusEl.innerHTML = `<span style="color:var(--stop)">${err.message}</span>`;
+                statusEl.innerHTML = `<span class="msg-bad">${esc(err.message)}</span>`;
+                btn.disabled = false;
+                btn.textContent = 'Record override';
             }
         });
     }
 }
 
+async function loadResults() {
+    const container = document.getElementById('results-container');
+    const orgId = window.PCK.getOrg();
+
+    try {
+        const res = await fetch(
+            `/api/v1/inspections/${encodeURIComponent(inspectionId)}?org_id=${encodeURIComponent(orgId)}`);
+
+        if (res.status === 404) {
+            container.innerHTML = `
+                <div class="card">
+                    <div class="empty">
+                        <div class="empty-icon is-stop">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+                        </div>
+                        <h3>Inspection not found for this organisation</h3>
+                        <p>Record <span class="mono">${esc(inspectionId)}</span> is not visible to
+                           <span class="mono">${esc(orgId)}</span>. Inspections are scoped to the org that created
+                           them — switch org in the header if you expected to see it.</p>
+                        <a href="/" class="btn btn-ghost">Back to dashboard</a>
+                    </div>
+                </div>`;
+            return;
+        }
+        if (!res.ok) throw new Error(`Request failed (${res.status})`);
+
+        renderResults(await res.json(), container, orgId);
+    } catch (err) {
+        container.innerHTML = `
+            <div class="card">
+                <div class="callout callout-stop">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+                    <span><strong>Could not load this inspection.</strong> ${esc(err.message)}</span>
+                </div>
+            </div>`;
+    }
+}
+
+window.PCK.onOrgChange(loadResults);
 loadResults();
 </script>
 {% endblock %}

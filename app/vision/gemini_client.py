@@ -12,10 +12,15 @@ from __future__ import annotations
 import base64
 import json
 import logging
+import random
+import re
+import socket
 import time
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Optional
 
+from app.config import get_settings
 from app.domain.schemas import (
     CatalogueProduct,
     ObservedItem,
@@ -25,6 +30,142 @@ from app.domain.schemas import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Transient failure classification (what is worth a second attempt)
+# ---------------------------------------------------------------------------
+
+# Upstream is momentarily unable to serve a request that is otherwise valid.
+_RETRYABLE_HTTP_CODES = {408, 429, 500, 503, 504}
+_RETRYABLE_TOKENS = (
+    "unavailable",
+    "resource_exhausted",
+    "rate limit",
+    "ratelimit",
+    "too many requests",
+    "deadline_exceeded",
+    " internal",
+    "internal error",
+    "overloaded",
+    "high demand",
+    "timed out",
+    "timeout",
+    "connection reset",
+    "connection aborted",
+    "connection refused",
+    "remote end closed",
+    "temporarily unavailable",
+)
+
+# The request will never succeed as sent: credentials, permissions, arguments.
+_NON_RETRYABLE_HTTP_CODES = {400, 401, 403, 404, 422}
+_NON_RETRYABLE_TOKENS = (
+    "invalid_argument",
+    "unauthenticated",
+    "permission_denied",
+    "failed_precondition",
+    "api key not valid",
+    "api_key_invalid",
+    "api key expired",
+    "invalid api key",
+    "missing api key",
+    "unauthorized",
+    "not_found",
+)
+
+_NETWORK_ERRORS: tuple[type[BaseException], ...] = (
+    socket.timeout,
+    socket.gaierror,
+    TimeoutError,
+    ConnectionError,
+)
+
+
+@lru_cache(maxsize=1)
+def _genai_error_types() -> tuple[Any, Any]:
+    """Resolve the SDK's typed errors, tolerating versions that lack them."""
+    try:
+        from google.genai import errors as genai_errors
+
+        return (
+            getattr(genai_errors, "ServerError", None),
+            getattr(genai_errors, "ClientError", None),
+        )
+    except Exception:
+        return (None, None)
+
+
+def _error_text(exc: BaseException) -> str:
+    """Flatten an exception's message and status fields into searchable text."""
+    parts = [str(exc)]
+    for attr in ("message", "status", "reason"):
+        value = getattr(exc, attr, None)
+        if isinstance(value, str):
+            parts.append(value)
+    return " ".join(parts).lower()
+
+
+def _error_codes(exc: BaseException, text: str) -> set[int]:
+    """Collect status codes from typed attributes and from the message text."""
+    codes: set[int] = set()
+    for attr in ("code", "status_code", "http_status"):
+        value = getattr(exc, attr, None)
+        if isinstance(value, bool):
+            continue
+        if isinstance(value, int):
+            codes.add(value)
+        elif isinstance(value, str) and value.isdigit():
+            codes.add(int(value))
+    # Generic exceptions carry the status only in their text, e.g.
+    # "503 UNAVAILABLE. {'error': {'code': 503, ...}}".
+    codes.update(int(m) for m in re.findall(r"\b([45]\d\d)\b", text))
+    return codes
+
+
+def _is_retryable_error(exc: BaseException) -> bool:
+    """
+    True only for transient upstream failures.
+
+    Non-retryable signals are evaluated first, so an auth, permission or
+    argument error can never be retried even when its payload happens to
+    mention a retryable word. Parse failures of a successful response are
+    never retried either — the model already answered.
+    """
+    if isinstance(exc, (VLMError, json.JSONDecodeError)):
+        return False
+
+    text = _error_text(exc)
+    codes = _error_codes(exc, text)
+
+    if codes & _NON_RETRYABLE_HTTP_CODES:
+        return False
+    if any(token in text for token in _NON_RETRYABLE_TOKENS):
+        return False
+
+    server_error, client_error = _genai_error_types()
+    if client_error is not None and isinstance(exc, client_error):
+        # 4xx from the SDK: only throttling is worth another attempt.
+        return bool(codes & {408, 429})
+    if server_error is not None and isinstance(exc, server_error):
+        return True
+
+    if codes & _RETRYABLE_HTTP_CODES:
+        return True
+    if any(token in text for token in _RETRYABLE_TOKENS):
+        return True
+
+    return isinstance(exc, _NETWORK_ERRORS)
+
+
+def _failure_message(exc: BaseException, attempts: int, note: str = "") -> str:
+    """Operator-visible reason — this text is persisted on pending records."""
+    message = f"Gemini API error: {exc}"
+    if attempts > 1:
+        message += f" (retried, {attempts} attempts)"
+    if note:
+        message += f" ({note})"
+    return message
 
 
 # ---------------------------------------------------------------------------
@@ -161,12 +302,31 @@ class GeminiPackVerifier:
     Gemini-based pack verification client.
 
     Makes a single batched call per unit with all images + context.
+    Transient upstream failures are retried with exponential backoff.
     Returns parsed ObservedItems or raises on failure for fail-open handling.
     """
 
-    def __init__(self, api_key: str, model: str = "gemini-2.5-flash"):
+    def __init__(
+        self,
+        api_key: str,
+        model: str = "gemini-2.5-flash",
+        max_retries: Optional[int] = None,
+        retry_base_seconds: Optional[float] = None,
+    ):
+        settings = get_settings()
         self.api_key = api_key
         self.model = model
+        self.max_retries = max(
+            0, settings.vlm_max_retries if max_retries is None else int(max_retries)
+        )
+        self.retry_base_seconds = max(
+            0.0,
+            float(
+                settings.vlm_retry_base_seconds
+                if retry_base_seconds is None
+                else retry_base_seconds
+            ),
+        )
         self._client = None
 
     def _get_client(self):
@@ -175,6 +335,60 @@ class GeminiPackVerifier:
             from google import genai
             self._client = genai.Client(api_key=self.api_key)
         return self._client
+
+    def _generate_with_retry(
+        self,
+        client: Any,
+        contents: Any,
+        config: Any,
+        start_time: float,
+        timeout_seconds: int,
+    ) -> Any:
+        """
+        Issue the batched request, retrying only transient upstream failures.
+
+        Every attempt sends the same single request carrying all checks, and a
+        success returns immediately, so the one-call-per-unit rule holds. The
+        retry budget is bounded by both max_retries and timeout_seconds.
+        """
+        budget_seconds = max(0.0, float(timeout_seconds))
+        total_attempts = self.max_retries + 1
+        attempts = 0
+
+        while True:
+            attempts += 1
+            try:
+                return client.models.generate_content(
+                    model=self.model,
+                    contents=contents,
+                    config=config,
+                )
+            except Exception as e:
+                elapsed = time.time() - start_time
+
+                if attempts > self.max_retries or not _is_retryable_error(e):
+                    raise VLMError(
+                        _failure_message(e, attempts),
+                        latency_ms=elapsed * 1000,
+                    ) from e
+
+                backoff = self.retry_base_seconds * (2 ** (attempts - 1))
+                backoff += random.uniform(0.0, self.retry_base_seconds * 0.25)
+
+                if backoff >= budget_seconds - elapsed:
+                    raise VLMError(
+                        _failure_message(
+                            e, attempts,
+                            note=f"{timeout_seconds}s time budget exhausted",
+                        ),
+                        latency_ms=elapsed * 1000,
+                    ) from e
+
+                logger.warning(
+                    f"Transient Gemini failure on attempt {attempts}/{total_attempts}, "
+                    f"retrying in {backoff:.2f}s: {e}"
+                )
+                time.sleep(backoff)
 
     def verify_package(
         self,
@@ -190,7 +404,8 @@ class GeminiPackVerifier:
             image_paths: Paths to package photographs.
             order_lines: Expected order lines.
             catalogue: Product catalogue for grounding.
-            timeout_seconds: Max wait time for model response.
+            timeout_seconds: Max wait time for the model response, and the
+                total budget shared by any retries of a transient failure.
 
         Returns:
             VerificationResult with observed items, quality info, and metadata.
@@ -224,15 +439,18 @@ class GeminiPackVerifier:
                 except Exception as e:
                     logger.warning(f"Failed to load image {img_path}: {e}")
 
-            # Single batched call with structured output
-            response = client.models.generate_content(
-                model=self.model,
+            # Single batched call with structured output, retried on transient
+            # upstream failures only (the payload is built once, above).
+            response = self._generate_with_retry(
+                client=client,
                 contents=[types.Content(role="user", parts=parts)],
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
                     response_schema=VLM_RESPONSE_SCHEMA,
                     temperature=0.1,
                 ),
+                start_time=start_time,
+                timeout_seconds=timeout_seconds,
             )
 
             latency_ms = (time.time() - start_time) * 1000

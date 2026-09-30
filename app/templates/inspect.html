@@ -1,146 +1,594 @@
 {% extends "base.html" %}
-{% block title %}Pack Manager — New Inspection{% endblock %}
+{% set active_page = 'inspect' %}
+{% block title %}New inspection — Pack Manager{% endblock %}
+
+{% block head %}
+<style>
+    .step {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px 12px;
+        margin-bottom: 18px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--edge);
+    }
+    .step-n {
+        display: grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--brand-600);
+        color: #fff;
+        font-size: 0.78rem;
+        font-weight: 700;
+        box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.16), 0 8px 20px -10px var(--accent-glow);
+        flex-shrink: 0;
+    }
+    .step h2 { margin: 0; min-width: 0; }
+    .step .hint {
+        margin-left: auto;
+        text-align: right;
+        color: var(--ink-300);
+        max-width: 28ch;
+    }
+
+    /* Order line rows */
+    .line-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 104px 34px;
+        gap: 10px;
+        align-items: center;
+    }
+    .line-row + .line-row { margin-top: 10px; }
+    .line-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 104px 34px;
+        gap: 10px;
+        margin-bottom: 8px;
+    }
+    .line-head span {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--ink-400);
+        font-weight: 700;
+    }
+
+    /* Dropzone */
+    .dropzone {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        padding: 36px 22px;
+        border: 1.5px dashed rgba(10, 132, 255, 0.4);
+        border-radius: var(--radius);
+        background: var(--surface-sunken);
+        cursor: pointer;
+        text-align: center;
+        transition: border-color 0.15s, background 0.15s, box-shadow 0.18s;
+    }
+    .dropzone:hover {
+        border-color: var(--brand-500);
+        background: rgba(10, 132, 255, 0.06);
+    }
+    .dropzone.is-over {
+        border-style: solid;
+        border-color: var(--brand-500);
+        background: rgba(10, 132, 255, 0.1);
+        box-shadow: 0 0 0 4px rgba(10, 132, 255, 0.18), 0 20px 48px -22px var(--accent-glow);
+    }
+    .dropzone-icon {
+        display: grid;
+        place-items: center;
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+        background: var(--mesh-dark);
+        color: #fff;
+        box-shadow: 0 10px 26px -12px var(--accent-glow);
+    }
+    .dropzone-icon svg { width: 21px; height: 21px; }
+    .dropzone strong { font-family: var(--font-display); font-size: 0.95rem; font-weight: 700; color: #fff; letter-spacing: -0.015em; }
+    .dropzone .hint { max-width: 46ch; }
+    .dropzone .hint b { color: var(--ink-500); font-weight: 700; }
+
+    .thumbs {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
+        gap: 12px;
+        margin-top: 14px;
+    }
+    .thumb {
+        position: relative;
+        border: 1px solid var(--ink-100);
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--surface2);
+    }
+    .thumb img { width: 100%; height: 92px; object-fit: cover; display: block; background: var(--surface3); }
+    .thumb-meta {
+        padding: 7px 9px 8px;
+        font-size: 0.7rem;
+        color: var(--ink-400);
+        line-height: 1.45;
+        border-top: 1px solid var(--ink-100);
+    }
+    .thumb-meta b { display: block; color: var(--ink-500); font-weight: 600; }
+    /* Sits on top of the photo rather than on a panel, so it keeps its own dark
+       scrim and a light ring instead of following the surface tokens. */
+    .thumb-x {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 25px;
+        height: 25px;
+        display: grid;
+        place-items: center;
+        border: none;
+        border-radius: 8px;
+        background: rgba(5, 5, 5, 0.78);
+        box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.4), 0 4px 12px rgba(0, 0, 0, 0.55);
+        color: #fff;
+        cursor: pointer;
+        padding: 0;
+        transition: background 0.15s, box-shadow 0.15s;
+    }
+    .thumb-x:hover { background: var(--stop); color: #200404; box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.55), 0 4px 14px rgba(248, 113, 113, 0.45); }
+    .thumb-x svg { width: 13px; height: 13px; }
+
+    .submit-bar {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+    }
+
+    /* Full-width outcomes. Each point keeps its badge and wraps its own copy,
+       so nothing is clipped against a narrow rail. */
+    .outcomes {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+    .outcome {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        min-width: 0;
+        padding: 14px 16px;
+        background: var(--surface);
+        border: 1px solid var(--edge);
+        border-radius: 16px;
+    }
+    .outcome p { margin: 0; color: var(--ink-400); font-size: 0.8125rem; line-height: 1.45; }
+
+    .verify-bar {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        flex-wrap: wrap;
+        position: sticky;
+        bottom: 16px;
+        z-index: 30;
+        margin-top: 4px;
+        padding: 14px 18px;
+        background: rgba(28, 28, 31, 0.92);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(10, 132, 255, 0.34);
+        border-radius: 20px;
+        box-shadow: 0 18px 50px -20px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(10, 132, 255, 0.12);
+    }
+    .verify-checks { display: flex; gap: 16px; flex-wrap: wrap; flex: 1; min-width: 0; }
+    .ready-row { display: flex; align-items: center; gap: 8px; }
+    .ready-row .dot { width: 8px; height: 8px; }
+    .verify-bar .btn { min-width: 180px; }
+    #status:empty { display: none; }
+    #status { flex-basis: 100%; }
+
+    @media (max-width: 900px) {
+        .outcomes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 720px) {
+        .step .hint { display: none; }
+        .outcomes { grid-template-columns: minmax(0, 1fr); }
+        .verify-bar .btn { width: 100%; }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="card">
-    <h2>New Pack Inspection</h2>
-    <p style="color: var(--text-muted); margin-bottom: 20px;">
-        Verify package contents before sealing. Upload photos and enter order details.
-    </p>
+<div class="page-head">
+    <span class="eyebrow">Pre-seal check</span>
+    <h1>New pack inspection</h1>
+    <p>Enter what the order says, upload photos of the open box, and the agent verifies one against the other
+       before anything is sealed.</p>
+</div>
 
-    <form id="inspectForm" enctype="multipart/form-data">
-        <div class="grid-2">
-            <div class="form-group">
-                <label>Order ID</label>
-                <input type="text" name="order_id" required placeholder="e.g. ORD-2026-001">
-            </div>
-            <div class="form-group">
-                <label>Unit ID</label>
-                <input type="text" name="unit_id" required placeholder="e.g. UNIT-0001">
-            </div>
-        </div>
+<div class="outcomes">
+    <div class="outcome">
+        <span class="badge badge-seal">Seal</span>
+        <p>Contents match the order. Close the box.</p>
+    </div>
+    <div class="outcome">
+        <span class="badge badge-stop">Stop &amp; fix</span>
+        <p>A real discrepancy was found. Correct it before sealing.</p>
+    </div>
+    <div class="outcome">
+        <span class="badge badge-uncertain">Needs review</span>
+        <p>The evidence will not support a call, so the agent hands it to you.</p>
+    </div>
+    <div class="outcome">
+        <span class="badge badge-pending">Pending</span>
+        <p>The model failed or timed out. The capture is still saved.</p>
+    </div>
+</div>
 
-        <div class="grid-2">
-            <div class="form-group">
-                <label>Organization ID</label>
-                <input type="text" name="org_id" required value="org_demo_alpha">
-            </div>
-            <div class="form-group">
-                <label>Channel</label>
-                <select name="channel" required>
-                    <option value="amazon_mfn">Amazon MFN</option>
-                    <option value="shopify">Shopify</option>
-                    <option value="walmart">Walmart</option>
-                    <option value="3pl_client">3PL Client</option>
-                </select>
-            </div>
-        </div>
+<form id="inspectForm" novalidate>
+            <!-- Step 1 — order -->
+            <div class="card">
+                <div class="step">
+                    <span class="step-n">1</span>
+                    <h2>Order details</h2>
+                    <span class="hint">Identifies the unit downstream</span>
+                </div>
 
-        <div class="form-group">
-            <label>Order Lines (one per row: SKU, Quantity)</label>
-            <div id="order-lines">
-                <div class="grid-2" style="margin-bottom: 8px;">
-                    <input type="text" placeholder="SKU (e.g. SKU-BLK-TSHIRT)" class="line-sku">
-                    <input type="number" min="1" value="1" class="line-qty">
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="order_id">Order ID <span class="req">*</span></label>
+                        <input id="order_id" name="order_id" type="text" required placeholder="ORD-2026-001" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="unit_id">Unit ID <span class="req">*</span></label>
+                        <input id="unit_id" name="unit_id" type="text" required placeholder="UNIT-0001" autocomplete="off">
+                        <p class="hint">The join key Returns and Recovery use to find this record.</p>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="org_id">Organisation <span class="req">*</span></label>
+                        <input id="org_id" name="org_id" type="text" required list="orgOptions" autocomplete="off">
+                        <p class="hint">Kept in sync with the org switcher in the header.</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="channel">Channel <span class="req">*</span></label>
+                        <select id="channel" name="channel" required>
+                            <option value="amazon_mfn">Amazon MFN</option>
+                            <option value="shopify">Shopify</option>
+                            <option value="walmart">Walmart</option>
+                            <option value="3pl_client">3PL client</option>
+                        </select>
+                        <p class="hint">Amazon FBA is out of scope — Amazon packs those.</p>
+                    </div>
                 </div>
             </div>
-            <button type="button" onclick="addLine()" class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;margin-top:4px;">+ Add Line</button>
-        </div>
 
-        <div class="form-group">
-            <label>Package Photos</label>
-            <input type="file" name="images" accept="image/*" multiple required
-                   style="padding: 20px; border-style: dashed;">
-        </div>
+            <!-- Step 2 — lines -->
+            <div class="card">
+                <div class="step">
+                    <span class="step-n">2</span>
+                    <h2>Expected contents</h2>
+                    <span class="hint">What the box should contain</span>
+                </div>
 
-        <div class="form-group">
-            <label>Catalogue (optional, JSON)</label>
-            <textarea name="catalogue_json" rows="3" placeholder='[{"sku": "SKU-BLK-TSHIRT", "name": "Black T-Shirt"}]'>[]</textarea>
-        </div>
+                <div class="line-head" aria-hidden="true">
+                    <span>SKU</span><span>Quantity</span><span></span>
+                </div>
+                <div id="order-lines"></div>
 
-        <button type="submit" class="btn btn-primary" id="submitBtn">Verify Package</button>
-        <div id="status" style="margin-top: 16px;"></div>
-    </form>
-</div>
+                <div class="btn-row" style="margin-top: 12px;">
+                    <button type="button" class="btn btn-ghost btn-sm" id="addLine">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                        Add line
+                    </button>
+                    <span class="hint" id="lineCount"></span>
+                </div>
+            </div>
 
-<div id="result-preview" style="display:none;">
-    <!-- Results rendered here after submission -->
-</div>
+            <!-- Step 3 — photos -->
+            <div class="card">
+                <div class="step">
+                    <span class="step-n">3</span>
+                    <h2>Package photos</h2>
+                    <span class="hint">One batched model call per unit</span>
+                </div>
+
+                <div class="dropzone" id="dropzone" tabindex="0" role="button"
+                     aria-label="Add package photos — click, or drop image files here">
+                    <span class="dropzone-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                            <circle cx="12" cy="13" r="3.5"/>
+                        </svg>
+                    </span>
+                    <strong>Drop photos here, or click to browse</strong>
+                    <span class="hint">JPG, PNG or WebP. Shoot the <b>open</b> box so every item is visible —
+                        a clear photo is what lets the agent commit to a verdict.</span>
+                </div>
+                <input type="file" id="fileInput" accept="image/*" multiple class="sr-only" tabindex="-1">
+
+                <div class="thumbs" id="thumbs"></div>
+                <p class="hint" id="fileCount" style="margin-top: 12px;">No photos selected yet.</p>
+            </div>
+
+            <!-- Step 4 — catalogue -->
+            <div class="card">
+                <div class="step">
+                    <span class="step-n">4</span>
+                    <h2>Catalogue <span class="badge badge-pending no-dot" style="margin-left:6px;">Optional</span></h2>
+                    <span class="hint">Improves SKU matching</span>
+                </div>
+                <div class="form-group">
+                    <label for="catalogue_json">Product reference JSON</label>
+                    <textarea id="catalogue_json" name="catalogue_json" rows="3"
+                              spellcheck="false"
+                              placeholder='[{"sku": "SKU-BLK-TSHIRT", "name": "Black T-Shirt"}]'>[]</textarea>
+                    <p class="hint">Give the agent names and aliases for your SKUs so an unrecognised item is
+                       reported as a catalogue gap rather than guessed at.</p>
+                </div>
+            </div>
+
+            <div class="verify-bar">
+                <div class="verify-checks">
+                    <div class="ready-row">
+                        <span class="dot" id="chk-order"></span>
+                        <span class="hint">Order and unit ID</span>
+                    </div>
+                    <div class="ready-row">
+                        <span class="dot" id="chk-lines"></span>
+                        <span class="hint">At least one order line</span>
+                    </div>
+                    <div class="ready-row">
+                        <span class="dot" id="chk-photos"></span>
+                        <span class="hint">At least one photo</span>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                    Verify package
+                </button>
+                <div id="status" aria-live="polite"></div>
+            </div>
+</form>
 {% endblock %}
 
 {% block scripts %}
 <script>
-function addLine() {
-    const container = document.getElementById('order-lines');
-    const div = document.createElement('div');
-    div.className = 'grid-2';
-    div.style.marginBottom = '8px';
-    div.innerHTML = `
-        <input type="text" placeholder="SKU" class="line-sku">
-        <input type="number" min="1" value="1" class="line-qty">
-    `;
-    container.appendChild(div);
+const esc = window.PCK.esc;
+
+/* ---------------- Order lines ---------------- */
+const linesHost = document.getElementById('order-lines');
+
+function addLine(sku = '', qty = 1) {
+    const row = document.createElement('div');
+    row.className = 'line-row';
+    row.innerHTML = `
+        <input type="text" class="line-sku" placeholder="SKU-BLK-TSHIRT" autocomplete="off" aria-label="SKU">
+        <input type="number" class="line-qty" min="1" step="1" value="${qty}" aria-label="Quantity">
+        <button type="button" class="btn btn-icon" aria-label="Remove line">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>`;
+    row.querySelector('.line-sku').value = sku;
+    row.querySelector('button').addEventListener('click', () => {
+        row.remove();
+        if (!linesHost.children.length) addLine();
+        syncReady();
+    });
+    row.querySelectorAll('input').forEach(i => i.addEventListener('input', syncReady));
+    linesHost.appendChild(row);
+    return row;
 }
 
+document.getElementById('addLine').addEventListener('click', () => {
+    addLine().querySelector('.line-sku').focus();
+});
+
+function collectLines() {
+    const out = [];
+    linesHost.querySelectorAll('.line-row').forEach(row => {
+        const sku = row.querySelector('.line-sku').value.trim();
+        const qty = parseInt(row.querySelector('.line-qty').value, 10);
+        if (sku) out.push({ sku, quantity: Number.isFinite(qty) && qty > 0 ? qty : 1 });
+    });
+    return out;
+}
+
+/* ---------------- Photos ---------------- */
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const thumbs = document.getElementById('thumbs');
+let selected = [];
+
+function humanSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+    return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+}
+
+function addFiles(fileList) {
+    const incoming = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+    const rejected = fileList.length - incoming.length;
+    if (rejected > 0) {
+        window.PCK.toast(rejected + ' file(s) skipped — images only', 'uncertain');
+    }
+    for (const file of incoming) {
+        const dupe = selected.some(f => f.name === file.name && f.size === file.size);
+        if (!dupe) selected.push(file);
+    }
+    renderThumbs();
+}
+
+function renderThumbs() {
+    thumbs.innerHTML = '';
+    selected.forEach((file, index) => {
+        const url = URL.createObjectURL(file);
+        const cell = document.createElement('div');
+        cell.className = 'thumb';
+        cell.innerHTML = `
+            <img src="${url}" alt="">
+            <button type="button" class="thumb-x" aria-label="Remove ${esc(file.name)}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+            <div class="thumb-meta"><b class="truncate">${esc(file.name)}</b>${humanSize(file.size)}</div>`;
+        cell.querySelector('img').addEventListener('load', () => URL.revokeObjectURL(url), { once: true });
+        cell.querySelector('.thumb-x').addEventListener('click', () => {
+            selected.splice(index, 1);
+            renderThumbs();
+        });
+        thumbs.appendChild(cell);
+    });
+
+    document.getElementById('fileCount').textContent = selected.length
+        ? `${selected.length} photo${selected.length === 1 ? '' : 's'} ready — all sent in a single model call.`
+        : 'No photos selected yet.';
+    syncReady();
+}
+
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
+});
+fileInput.addEventListener('change', () => { addFiles(fileInput.files); fileInput.value = ''; });
+
+['dragenter', 'dragover'].forEach(evt =>
+    dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.add('is-over'); }));
+['dragleave', 'drop'].forEach(evt =>
+    dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.remove('is-over'); }));
+dropzone.addEventListener('drop', e => {
+    if (e.dataTransfer && e.dataTransfer.files) addFiles(e.dataTransfer.files);
+});
+
+/* ---------------- Readiness checklist ---------------- */
+function syncReady() {
+    const lines = collectLines();
+    const hasIds = document.getElementById('order_id').value.trim()
+                && document.getElementById('unit_id').value.trim();
+
+    document.getElementById('chk-order').className = 'dot ' + (hasIds ? 'ok' : '');
+    document.getElementById('chk-lines').className = 'dot ' + (lines.length ? 'ok' : '');
+    document.getElementById('chk-photos').className = 'dot ' + (selected.length ? 'ok' : '');
+    document.getElementById('lineCount').textContent = lines.length
+        ? `${lines.length} line${lines.length === 1 ? '' : 's'} · ${lines.reduce((n, l) => n + l.quantity, 0)} item(s) expected`
+        : 'Add at least one SKU.';
+}
+
+['order_id', 'unit_id'].forEach(id =>
+    document.getElementById(id).addEventListener('input', syncReady));
+
+/* ---------------- Org sync with header ---------------- */
+const orgField = document.getElementById('org_id');
+orgField.value = window.PCK.getOrg();
+orgField.addEventListener('change', () => window.PCK.setOrg(orgField.value));
+window.PCK.onOrgChange(org => { orgField.value = org; });
+
+/* ---------------- Submit ---------------- */
 document.getElementById('inspectForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('submitBtn');
     const status = document.getElementById('status');
-
-    btn.disabled = true;
-    btn.textContent = 'Analyzing...';
-    status.innerHTML = '<div class="loading"><div class="spinner"></div><br>Sending images to AI for analysis...</div>';
-
     const form = e.target;
-    const formData = new FormData();
 
-    // Collect order lines
-    const skus = form.querySelectorAll('.line-sku');
-    const qtys = form.querySelectorAll('.line-qty');
-    const orderLines = [];
-    skus.forEach((el, i) => {
-        if (el.value.trim()) {
-            orderLines.push({ sku: el.value.trim(), quantity: parseInt(qtys[i].value) || 1 });
-        }
+    const problems = [];
+    const orderId = document.getElementById('order_id');
+    const unitId = document.getElementById('unit_id');
+    const lines = collectLines();
+
+    [orderId, unitId].forEach(field => {
+        const bad = !field.value.trim();
+        field.setAttribute('aria-invalid', String(bad));
+        if (bad) problems.push(field.previousElementSibling.textContent.replace('*', '').trim() + ' is required');
     });
+    if (!lines.length) problems.push('Add at least one order line');
+    if (!selected.length) problems.push('Add at least one package photo');
 
-    if (!orderLines.length) {
-        status.innerHTML = '<p style="color:var(--stop)">Add at least one order line.</p>';
-        btn.disabled = false;
-        btn.textContent = 'Verify Package';
+    let catalogue = '[]';
+    const rawCatalogue = document.getElementById('catalogue_json').value.trim() || '[]';
+    try {
+        JSON.parse(rawCatalogue);
+        catalogue = rawCatalogue;
+    } catch (err) {
+        problems.push('Catalogue is not valid JSON');
+    }
+
+    if (problems.length) {
+        status.innerHTML = `
+            <div class="callout callout-stop">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+                <span><strong>Not ready yet.</strong><br>${problems.map(esc).join('<br>')}</span>
+            </div>`;
+        window.PCK.toast(problems[0], 'stop');
+        (problems[0].includes('photo') ? dropzone : orderId).focus();
         return;
     }
 
-    formData.append('order_id', form.order_id.value);
-    formData.append('unit_id', form.unit_id.value);
-    formData.append('org_id', form.org_id.value);
-    formData.append('channel', form.channel.value);
-    formData.append('order_lines_json', JSON.stringify(orderLines));
-    formData.append('catalogue_json', form.catalogue_json.value || '[]');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width:15px;height:15px;border-width:2px;"></span> Analysing…';
+    status.innerHTML = `
+        <div class="callout callout-info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+            <span><strong>Running all checks in one model call.</strong><br>
+            <span class="hint">${selected.length} photo(s) · usually a few seconds</span></span>
+        </div>
+        <div class="bar" style="margin-top:12px;"><i style="width:15%"></i></div>`;
 
-    const files = form.querySelector('[name="images"]').files;
-    for (const file of files) {
-        formData.append('images', file);
-    }
+    const barFill = status.querySelector('.bar > i');
+    let progress = 15;
+    const ticker = setInterval(() => {
+        progress = Math.min(progress + Math.random() * 9, 90);
+        if (barFill) barFill.style.width = progress + '%';
+    }, 700);
+
+    const formData = new FormData();
+    formData.append('order_id', orderId.value.trim());
+    formData.append('unit_id', unitId.value.trim());
+    formData.append('org_id', window.PCK.setOrg(orgField.value));
+    formData.append('channel', form.channel.value);
+    formData.append('order_lines_json', JSON.stringify(lines));
+    formData.append('catalogue_json', catalogue);
+    selected.forEach(file => formData.append('images', file));
+
+    const restore = () => {
+        clearInterval(ticker);
+        btn.disabled = false;
+        btn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Verify package';
+    };
 
     try {
         const res = await fetch('/api/v1/verify/json', { method: 'POST', body: formData });
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
 
         if (!res.ok) {
-            status.innerHTML = `<p style="color:var(--stop)">Error: ${data.detail || JSON.stringify(data)}</p>`;
-            btn.disabled = false;
-            btn.textContent = 'Verify Package';
+            const detail = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail || data);
+            restore();
+            status.innerHTML = `
+                <div class="callout callout-stop">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+                    <span><strong>Verification failed (${res.status}).</strong><br>${esc(detail)}</span>
+                </div>`;
+            window.PCK.toast('Verification failed', 'stop');
             return;
         }
 
-        // Redirect to results page
-        window.location.href = `/results/${data.inspection_id}`;
+        if (barFill) barFill.style.width = '100%';
+        window.PCK.toast('Inspection complete — opening results', 'seal', 2000);
+        window.location.href = `/results/${encodeURIComponent(data.inspection_id)}`;
     } catch (err) {
-        status.innerHTML = `<p style="color:var(--stop)">Request failed: ${err.message}</p>`;
-        btn.disabled = false;
-        btn.textContent = 'Verify Package';
+        restore();
+        status.innerHTML = `
+            <div class="callout callout-stop">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+                <span><strong>Request failed.</strong><br>${esc(err.message)}</span>
+            </div>`;
+        window.PCK.toast('Request failed', 'stop');
     }
 });
+
+addLine();
+syncReady();
 </script>
 {% endblock %}
