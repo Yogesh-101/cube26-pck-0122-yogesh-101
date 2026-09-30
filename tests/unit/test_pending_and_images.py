@@ -43,6 +43,34 @@ def test_image_dir_is_scoped_to_org(tmp_path):
     assert alpha.is_relative_to(tmp_path.resolve())
 
 
+def test_resolve_image_stays_inside_storage_and_on_this_record(tmp_path):
+    from app.api.routes import resolve_inspection_image
+
+    photo = tmp_path / "org_demo_alpha" / "UNIT-0001"
+    photo.mkdir(parents=True)
+    file_path = photo / "shot.png"
+    file_path.write_bytes(b"\x89PNG\r\n")
+
+    outside = tmp_path.parent / "escaped.png"
+    outside.write_bytes(b"nope")
+
+    inspection = {
+        "images": [],
+        "evidence_record": {
+            "images": [
+                {"image_id": "img-ok", "path": str(file_path)},
+                {"image_id": "img-escape", "path": str(outside)},
+            ]
+        },
+    }
+
+    found = resolve_inspection_image(inspection, "img-ok", tmp_path)
+    assert found == file_path.resolve()
+    assert resolve_inspection_image(inspection, "img-escape", tmp_path) is None
+    assert resolve_inspection_image(inspection, "does-not-exist", tmp_path) is None
+    outside.unlink(missing_ok=True)
+
+
 def test_image_dir_rejects_path_escape(tmp_path):
     try:
         dest = tenant_image_dir(tmp_path, "..", "UNIT-0001")

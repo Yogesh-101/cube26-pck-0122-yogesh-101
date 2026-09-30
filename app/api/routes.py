@@ -9,15 +9,14 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import re
-import shutil
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from app.config import get_settings
@@ -25,8 +24,6 @@ from app.domain.schemas import (
     CatalogueProduct,
     Channel,
     Decision,
-    EvidenceRecord,
-    HumanOverride,
     InspectionStatus,
     Order,
     OrderLine,
@@ -73,6 +70,59 @@ def tenant_image_dir(storage_root: str | Path, org_id: str, unit_id: str) -> Pat
     if dest != root and root not in dest.parents:
         raise HTTPException(status_code=400, detail="Invalid storage path")
     return dest
+
+
+_IMAGE_EXTENSIONS = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp", ".gif": "image/gif"}
+
+
+async def persist_uploads(image_dir: Path, images: list[UploadFile], max_mb: int) -> list[str]:
+    """Write only real images, capped in size, under the tenant directory."""
+    if not images:
+        raise HTTPException(status_code=422, detail="At least one package photo is required")
+
+    saved: list[str] = []
+    limit = max_mb * 1024 * 1024
+    for upload in images:
+        ext = Path(upload.filename or "").suffix.lower()
+        if ext not in _IMAGE_EXTENSIONS:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Unsupported file type '{ext or 'none'}'. Use JPG, PNG, WebP, or GIF.",
+            )
+        content = await upload.read()
+        if len(content) < 32:
+            raise HTTPException(status_code=422, detail="An uploaded image is empty")
+        if len(content) > limit:
+            raise HTTPException(status_code=413, detail=f"Image exceeds the {max_mb}MB limit")
+        file_path = image_dir / f"{uuid.uuid4().hex[:8]}{ext}"
+        file_path.write_bytes(content)
+        saved.append(str(file_path))
+    return saved
+
+
+def resolve_inspection_image(inspection: dict, image_id: str, storage_root: str | Path) -> Optional[Path]:
+    """
+    Return the capture file only when this inspection lists that image id
+    and the stored path stays inside the storage root.
+
+    Callers must already have loaded the inspection for the requesting org.
+    A path that escapes the root, or an id that is not on this record, returns None.
+    """
+    listed = list(inspection.get("images") or [])
+    evidence = inspection.get("evidence_record") or {}
+    listed.extend(evidence.get("images") or [])
+
+    match = next((item for item in listed if item.get("image_id") == image_id), None)
+    if not match or not match.get("path"):
+        return None
+
+    root = Path(storage_root).resolve()
+    path = Path(match["path"]).resolve()
+    if path != root and root not in path.parents:
+        return None
+    if not path.is_file():
+        return None
+    return path
 
 
 # ---------------------------------------------------------------------------
@@ -133,19 +183,9 @@ async def verify_package(
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"Invalid order data: {e}")
 
-    # Save uploaded images
     image_dir = tenant_image_dir(settings.image_storage_path, req.org_id, req.unit_id)
     image_dir.mkdir(parents=True, exist_ok=True)
-
-    image_paths = []
-    for upload in images:
-        ext = Path(upload.filename or "image.jpg").suffix or ".jpg"
-        filename = f"{uuid.uuid4().hex[:8]}{ext}"
-        file_path = image_dir / filename
-        with open(file_path, "wb") as f:
-            content = await upload.read()
-            f.write(content)
-        image_paths.append(str(file_path))
+    image_paths = await persist_uploads(image_dir, images, settings.max_image_size_mb)
 
     # Build order
     order = Order(
@@ -214,19 +254,9 @@ async def verify_package_json(
     except Exception:
         catalogue = []
 
-    # Save uploaded images
     image_dir = tenant_image_dir(settings.image_storage_path, org_id, unit_id)
     image_dir.mkdir(parents=True, exist_ok=True)
-
-    image_paths = []
-    for upload in images:
-        ext = Path(upload.filename or "image.jpg").suffix or ".jpg"
-        filename = f"{uuid.uuid4().hex[:8]}{ext}"
-        file_path = image_dir / filename
-        with open(file_path, "wb") as f:
-            content = await upload.read()
-            f.write(content)
-        image_paths.append(str(file_path))
+    image_paths = await persist_uploads(image_dir, images, settings.max_image_size_mb)
 
     order = Order(
         order_id=order_id,
@@ -285,6 +315,30 @@ async def get_inspection(inspection_id: str, org_id: str = Query(...)):
         "overrides": overrides,
         "current_decision": overrides[-1]["new_decision"] if overrides else outcome.get("decision"),
     }
+
+
+def _load_inspection_for_org(inspection_id: str, org_id: str) -> dict:
+    data = db_get_inspection(inspection_id, org_id)
+    if not data:
+        data = _inspections.get(inspection_id)
+        if not data or data.get("order", {}).get("org_id") != org_id:
+            raise HTTPException(status_code=404, detail="Inspection not found")
+    return data
+
+
+@router.get("/api/v1/inspections/{inspection_id}/images/{image_id}")
+async def get_inspection_image(inspection_id: str, image_id: str, org_id: str = Query(...)):
+    """
+    Serve one captured photo. The inspection lookup is org-scoped, and the
+    file must be listed on that record and stay inside the storage root.
+    Guessing another tenant's inspection id or image id returns 404.
+    """
+    data = _load_inspection_for_org(inspection_id, org_id)
+    path = resolve_inspection_image(data, image_id, get_settings().image_storage_path)
+    if path is None:
+        raise HTTPException(status_code=404, detail="Image not found")
+    media = _IMAGE_EXTENSIONS.get(path.suffix.lower(), "application/octet-stream")
+    return FileResponse(path, media_type=media)
 
 
 @router.get("/api/v1/inspections")

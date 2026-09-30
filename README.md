@@ -110,7 +110,7 @@ The header org switcher is the tenant. The dashboard and every results page read
 
 1. **Dashboard** (`/`). Lists inspections for the active org. Outcome badges are SEAL, STOP & FIX, NEEDS REVIEW (`pending_review`), and PENDING. Filter and search are client-side on that list.
 2. **New inspection** (`/inspect`). Enter order id, unit id, channel, and at least one SKU line. Add photographs of the open box. Catalogue JSON is optional; if present it is sent as `catalogue_json` and reaches the vision prompt. Submit calls `POST /api/v1/verify/json`. The page does not submit until order id, unit id, one line, and one photo are present.
-3. **Results** (`/results/{inspection_id}`). Shows the decision in force, detected versus expected quantities, and each check. Reconciliation labels are match, missing, short, over, extra, and unknown. When the model never ran (`pending`), those lines read **Not checked**, not Missing, and the banner includes the saved reason (for example a Gemini 503). A `pending_review` record shows the uncertainty detail: reason code, what is known, what is unknown, missing evidence, and the recommended action.
+3. **Results** (`/results/{inspection_id}`). Shows the decision in force, the captured photos, detected versus expected quantities, and each check. Photos load from an org-scoped URL; another organisation gets 404, not the file. Reconciliation labels are match, missing, short, over, extra, and unknown. When the model never ran (`pending`), those lines read **Not checked**, not Missing, and the banner includes the saved reason (for example a Gemini 503). A `pending_review` record shows the uncertainty detail: reason code, what is known, what is unknown, missing evidence, and the recommended action.
 4. **Override**. On a STOP & FIX, NEEDS REVIEW, or PENDING result, record a new decision of SEAL or STOP & FIX. Operator id and reason are required. The agent's original `outcome` stays as stored. The override row keeps the original verdict, the new verdict, the operator id, and the reason. The page shows both.
 
 ### Run Tests
@@ -167,7 +167,11 @@ List inspections (org-scoped).
 
 ### `GET /api/v1/inspections/{id}?org_id=...`
 
-Get full inspection detail with evidence record.
+Get full inspection detail with the evidence record. `outcome` stays the agent's original verdict. The body also includes `overrides` and `current_decision` (the latest override, or the agent decision when there is none).
+
+### `GET /api/v1/inspections/{id}/images/{image_id}?org_id=...`
+
+Serve one captured photo for that organisation. The inspection lookup is org-scoped, the image id must be listed on that record, and the file must resolve inside the storage root. Another organisation receives 404, not the file.
 
 ### `POST /api/v1/inspections/{id}/override?org_id=...`
 
@@ -248,8 +252,8 @@ Full methodology and results: [`docs/EVALUATION.md`](docs/EVALUATION.md)
 | Official CSV evaluation | 7 | Passing |
 | Live VLM integration | 3 | Skipped when `GEMINI_API_KEY` is unset; they passed in the latest local run |
 | VLM retry policy | 29 | Passing |
-| Pending record and image path | 3 | Passing |
-| **Total** | **99** | **99 passed** |
+| Pending record and image path | 4 | Passing |
+| **Total** | **100** | **100 passed** |
 
 ---
 
@@ -267,7 +271,7 @@ Full methodology and results: [`docs/EVALUATION.md`](docs/EVALUATION.md)
 - **FBA is out of scope.** The channel validator rejects `fba` and `amazon_fba`.
 - **Vision depends on Gemini availability.** Without `GEMINI_API_KEY`, or when Gemini stays unavailable after the retry budget, the inspection is pending. This build does not include a second vision provider.
 - **Incorrect items** are represented as a missing expected SKU plus an unexpected extra SKU. The engine does not emit a separate `wrong_item` discrepancy row. `no_wrong_items` passes unless that discrepancy type is present, which the current engine does not write.
-- **Photos are not served over HTTP.** Files for new inspections are stored under `storage/images/<org_id>/<unit_id>/`. There is no public image route. An inspection's paths are returned only with that organisation's API call.
+- **Photos are served only to the owning organisation.** New files are stored under `storage/images/<org_id>/<unit_id>/`. The results page loads them from `GET /api/v1/inspections/{inspection_id}/images/{image_id}?org_id=`. The lookup is org-scoped, the image id must be on that record, and the path must stay inside the storage root. The storage directory is not mounted as public static files. Uploads are JPG, PNG, WebP, or GIF, and must stay under `max_image_size_mb`.
 - **Counting.** Identical stacked items can be undercounted. That path is UNCERTAIN and human review, not a forced SEAL.
 - **Storage.** SQLite plus local files. Queries are scoped by `org_id` in SQL. This is not Postgres row-level security.
 
@@ -330,7 +334,7 @@ pack-manager/
 | Schemas | Pydantic v2 | Validated contracts, JSON Schema generation |
 | Storage | SQLite (WAL mode) | Zero-config, sufficient for individual build |
 | UI | Jinja2 templates | Minimal, functional, no build step |
-| Testing | pytest | `python -m pytest tests -q` (99 tests on the current tree) |
+| Testing | pytest | `python -m pytest tests -q` (100 tests on the current tree) |
 
 ---
 

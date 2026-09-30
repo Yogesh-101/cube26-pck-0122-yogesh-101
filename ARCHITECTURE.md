@@ -105,11 +105,13 @@ Gate ────────────────┘                │   (p
 - SQLite with WAL mode for read concurrency
 - Every read and write is scoped to `org_id` (Engineering Rule 1)
 - Tested: `org_demo_alpha` cannot see or override `org_demo_bravo` data, including by guessing an inspection id
-- New photographs are stored under `storage/images/<org_id>/<unit_id>/`. Path segments reject `..` escapes. There is no public image URL.
+- New photographs are stored under `storage/images/<org_id>/<unit_id>/`. Uploads must be JPG, PNG, WebP, or GIF and must stay under `max_image_size_mb`. Path segments reject `..` escapes.
+- A photo is served only at `GET /api/v1/inspections/{inspection_id}/images/{image_id}?org_id=`. The inspection lookup is org-scoped, the image id must be listed on that record, and the file must resolve inside the storage root. There is no unauthenticated image URL.
 - Override rows are append-only. `save_override` updates the `decision` column and leaves the stored `outcome` JSON as the agent's original verdict
 
 ### Pipeline Orchestration (`app/pipeline.py`)
 - Coordinates: validate → quality gate → VLM → engine → evidence
+- Fail-open on the quality gate: blur, darkness, overexposure, and duplicates are flagged `is_uncertain`, and those photos are still sent. The decision engine then treats image quality as uncertain rather than rejecting the inspection.
 - Fail-open on VLM errors: saves a pending record, images, and a check whose `detail` is the error text
 - If no image is usable, the same pending path runs and the vision client is not called
 
@@ -125,7 +127,7 @@ The system is a **deterministic workflow with one Gemini call per unit**, not a 
 | Decision | `app/decision/engine.py` | No model. Five named checks. Any FAIL → `stop_and_fix` / `completed`. No FAIL and any UNCERTAIN → `stop_and_fix` / `pending_review`. All PASS → `seal`. UNCERTAIN never becomes a pass. |
 | Evidence hash | `hashlib.sha256` | Canonical JSON of the evidence record, excluding `content_hash`. |
 
-A second model call per check was rejected because Engineering Rule 2 requires one batched call per unit. The decision engine is covered by unit tests that never call Gemini.
+A second model call per check was rejected because Engineering Rule 2 requires one batched call per unit. Extra agents were rejected for the same reason: at this catalogue scale they add failure modes without an accuracy gain. The decision engine is covered by unit tests that never call Gemini.
 
 ## Important engineering decisions
 

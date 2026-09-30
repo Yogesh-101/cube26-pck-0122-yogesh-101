@@ -433,6 +433,7 @@ class GeminiPackVerifier:
                     mime_map = {
                         ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
                         ".png": "image/png", ".webp": "image/webp",
+                        ".gif": "image/gif",
                     }
                     mime = mime_map.get(suffix, "image/jpeg")
                     parts.append(types.Part.from_bytes(data=img_bytes, mime_type=mime))

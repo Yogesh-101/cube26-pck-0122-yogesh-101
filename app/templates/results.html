@@ -61,6 +61,20 @@
 
     .db-meta { text-align: right; }
 
+    .photo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 12px;
+    }
+    .photo-grid a {
+        display: block;
+        border: 1px solid var(--edge);
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--bg-deep);
+    }
+    .photo-grid img { width: 100%; height: 140px; object-fit: cover; display: block; }
+
     @media (max-width: 720px) {
         .check-row { flex-direction: column; gap: 9px; }
         .check-side { width: 100%; justify-content: space-between; }
@@ -254,6 +268,18 @@ function renderResults(data, container, orgId) {
             <span class="mono">${esc(last.operator_id)}</span> changed it to <strong>${d.label}</strong>.
             Both verdicts are kept — see the override history below.</span>
         </div>`;
+    }
+
+    const visiblePhotos = images.filter(img => img && img.image_id);
+    if (visiblePhotos.length) {
+        html += `<div class="card"><h2>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3.5"/></svg>
+            Package photos</h2><div class="photo-grid">`;
+        for (const img of visiblePhotos) {
+            const src = `/api/v1/inspections/${encodeURIComponent(inspectionId)}/images/${encodeURIComponent(img.image_id)}?org_id=${encodeURIComponent(orgId)}`;
+            html += `<a href="${src}" target="_blank" rel="noopener"><img src="${src}" alt="Photograph of the open package"></a>`;
+        }
+        html += `</div></div>`;
     }
 
     /* ---- Check tally ---- */
