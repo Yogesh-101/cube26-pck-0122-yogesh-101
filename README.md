@@ -7,16 +7,25 @@
 
 ---
 
-## Problem
+## Problem understanding
 
 A picker assembles an order and closes the box. If the wrong item or quantity goes in, the customer gets a mis-ship: a refund, a return, a replacement shipment, and a bad review. Manual checking doesn't scale.
 
-**Pack Manager** is an AI-powered agent that:
-- Analyzes photographs of an open package
-- Identifies every item and counts quantities
-- Compares against the expected order
-- Produces a decision: **SEAL** or **STOP & FIX**
-- Leaves structured evidence for every decision
+Before anything is sealed, Pack Manager has to say what is in the open package compared with the order:
+
+- items present
+- missing items
+- incorrect items (an expected SKU is absent and a different SKU is in the box)
+- incorrect quantities
+- unexpected extra items
+
+The operational decision is **SEAL** or **STOP & FIX**. **UNCERTAIN** is a valid result when the photograph or the match is ambiguous. The system must not invent a pass, and it must not invent items that are not visible or documented.
+
+Inputs are the order, an optional product catalogue (SKU, ASIN, name, aliases), and photographs of the open package. Outputs are the detected items, expected lines, expected versus observed quantities, the discrepancies above, the decision, and a supporting evidence record.
+
+**Who it is for:** sellers fulfilling their own orders, and 3PLs. Channels in the schema are `amazon_mfn`, `shopify`, `walmart`, and `3pl_client`. Amazon FBA is out of scope because Amazon packs those orders.
+
+The cases the engine can represent are a correct order (SEAL), a missing item, a wrong item, an extra item, a wrong quantity, several identical products, visually similar products (low confidence), and ambiguous photographs (UNCERTAIN / `pending_review`, never a low-confidence pass).
 
 ### Scope
 
@@ -34,7 +43,7 @@ Pack Manager is step 3 of 5. Our evidence records use `unit_id` as the join key 
 
 ---
 
-## Solution Overview
+## Solution overview
 
 ```
 Order + Catalogue → Input Validation → Image Quality Gate → Gemini VLM (single batched call)
@@ -52,16 +61,17 @@ Order + Catalogue → Input Validation → Image Quality Gate → Gemini VLM (si
 | UNCERTAIN → human review | Never auto-seal when evidence is insufficient |
 | Fail-open on errors | Engineering Rule 3: model timeout saves pending record, never blocks operator |
 | Org-scoped queries | Engineering Rule 1: tenancy isolation tested with two demo orgs |
-| Content hash on evidence | SHA-256 of canonical JSON for integrity verification |
+| Content hash on evidence | SHA-256 of canonical JSON. Detects accidental change. It is not a tamper-evident or anchored ledger |
+| Bounded Gemini retry | Transient 503, 429, 500, 504, and network errors retry with backoff (`VLM_MAX_RETRIES`, `VLM_RETRY_BASE_SECONDS`). 400 and 401 do not retry |
 
 ---
 
-## Setup
+## Setup instructions
 
 ### Prerequisites
 
 - Python 3.11+
-- Gemini API key ([get one free](https://aistudio.google.com/apikey))
+- A Gemini API key ([Google AI Studio](https://aistudio.google.com/apikey)). The vision step will not run without `GEMINI_API_KEY`.
 
 ### Installation
 
@@ -70,10 +80,21 @@ git clone https://github.com/Yogesh-101/cube26-pck-0122-yogesh-101.git
 cd cube26-pck-0122-yogesh-101
 
 python -m pip install -r requirements.txt
-
-cp .env.example .env
-# Edit .env and add your GEMINI_API_KEY
 ```
+
+Copy the example environment file and set the key. Do not commit `.env`.
+
+```bash
+cp .env.example .env
+```
+
+On Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Open `.env` and set `GEMINI_API_KEY`. The model name defaults to `gemini-2.5-flash` (`GEMINI_MODEL`). Optional retry knobs are `VLM_MAX_RETRIES` (default 2) and `VLM_RETRY_BASE_SECONDS` (default 1.0). `.env.example` contains placeholders only.
 
 ### Run
 
@@ -82,6 +103,15 @@ python -m uvicorn app.main:app --reload --port 8000
 ```
 
 Open http://localhost:8000 in your browser.
+
+## Usage instructions
+
+The header org switcher is the tenant. The dashboard and every results page read that value and send it as `org_id`. A second organisation sees none of the first organisation's rows. Opening another organisation's inspection id shows **Inspection not found for this organisation**, not that tenant's data.
+
+1. **Dashboard** (`/`). Lists inspections for the active org. Outcome badges are SEAL, STOP & FIX, NEEDS REVIEW (`pending_review`), and PENDING. Filter and search are client-side on that list.
+2. **New inspection** (`/inspect`). Enter order id, unit id, channel, and at least one SKU line. Add photographs of the open box. Catalogue JSON is optional; if present it is sent as `catalogue_json` and reaches the vision prompt. Submit calls `POST /api/v1/verify/json`. The page does not submit until order id, unit id, one line, and one photo are present.
+3. **Results** (`/results/{inspection_id}`). Shows the decision in force, detected versus expected quantities, and each check. Reconciliation labels are match, missing, short, over, extra, and unknown. When the model never ran (`pending`), those lines read **Not checked**, not Missing, and the banner includes the saved reason (for example a Gemini 503). A `pending_review` record shows the uncertainty detail: reason code, what is known, what is unknown, missing evidence, and the recommended action.
+4. **Override**. On a STOP & FIX, NEEDS REVIEW, or PENDING result, record a new decision of SEAL or STOP & FIX. Operator id and reason are required. The agent's original `outcome` stays as stored. The override row keeps the original verdict, the new verdict, the operator id, and the reason. The page shows both.
 
 ### Run Tests
 
@@ -208,30 +238,38 @@ Full methodology and results: [`docs/EVALUATION.md`](docs/EVALUATION.md)
 
 ## Test Coverage
 
-| Suite | Tests | Status |
+| Suite | Collected | Status |
 |---|---|---|
-| Decision engine (8 scenarios + edges) | 21 | All pass |
-| Schema validation | 12 | All pass |
-| Org isolation (Rule 1) | 6 | All pass |
-| Image quality gate | 9 | All pass |
-| Eval harness (synthetic) | 3 | All pass |
-| Official CSV evaluation | 7 | All pass |
-| Live VLM integration | 3 | All pass |
-| **Total** | **67** | **All pass** |
+| Decision engine | 21 | Passing in `python -m pytest tests -q` |
+| Schema validation | 18 | Passing |
+| Org isolation (Rule 1) | 6 | Passing |
+| Image quality gate | 9 | Passing |
+| Eval harness | 3 | Passing |
+| Official CSV evaluation | 7 | Passing |
+| Live VLM integration | 3 | Skipped when `GEMINI_API_KEY` is unset; they passed in the latest local run |
+| VLM retry policy | 29 | Passing |
+| Pending record and image path | 3 | Passing |
+| **Total** | **99** | **99 passed** |
 
 ---
 
-## Assumptions & Limitations
+## Assumptions & limitations
 
 ### Assumptions
-- Product catalogue is provided per order (catalogue-grounded identification)
-- Images are captured from a phone camera of a reasonably lit open box
-- Seller catalogues are small (20–60 SKUs) — long-tail identification is the known hard problem
+- The catalogue is optional. When it is supplied, the model is asked to match visible items to those SKUs and names. When it is empty, matching still uses the order lines.
+- Photographs are of the open package, not of a sealed box.
+- Seller catalogues in this build are small. Long-tail identification was not evaluated as a separate product.
 
 ### Limitations
-- **VLM counting reliability**: Counting identical stacked items in a box is an unsolved problem for current VLMs. The system mitigates this with UNCERTAIN verdicts and human review.
-- **No per-SKU training**: The system uses zero-shot VLM identification. For visually similar products (e.g., same shirt in two colors), accuracy depends heavily on image quality.
-- **Single-session**: Current deployment uses SQLite and in-memory state; production would need Postgres with proper RLS.
+- **Uncertain versus pending.** `pending_review` means the model ran and declined to judge (low confidence, similar products, or ambiguous image quality). The operational decision stored is `stop_and_fix` and the status is `pending_review`. The UI labels that **NEEDS REVIEW**, not a pass. `pending` means the model did not produce a verdict (timeout, API error after retries, or no usable photo). Nothing was checked. Those records have no `outcome` object, because inventing SEAL or STOP & FIX would be a fake decision.
+- **Content hash.** `content_hash` is the SHA-256 of the evidence record's canonical JSON, excluding the hash field itself. It detects accidental change. It is not a tamper-proof, immutable, or anchored ledger.
+- **Fail-open.** A Gemini error or timeout still saves the photographs and the order and still writes a `pending` record. The operator is not blocked. Transient failures (503, 429, 500, 504, network) are retried inside one inspection, still as a single logical call carrying every check. Auth and 400 errors are not retried.
+- **FBA is out of scope.** The channel validator rejects `fba` and `amazon_fba`.
+- **Vision depends on Gemini availability.** Without `GEMINI_API_KEY`, or when Gemini stays unavailable after the retry budget, the inspection is pending. This build does not include a second vision provider.
+- **Incorrect items** are represented as a missing expected SKU plus an unexpected extra SKU. The engine does not emit a separate `wrong_item` discrepancy row. `no_wrong_items` passes unless that discrepancy type is present, which the current engine does not write.
+- **Photos are not served over HTTP.** Files for new inspections are stored under `storage/images/<org_id>/<unit_id>/`. There is no public image route. An inspection's paths are returned only with that organisation's API call.
+- **Counting.** Identical stacked items can be undercounted. That path is UNCERTAIN and human review, not a forced SEAL.
+- **Storage.** SQLite plus local files. Queries are scoped by `org_id` in SQL. This is not Postgres row-level security.
 
 ### Known Failure Modes
 1. Identical products stacked/overlapping → undercount → UNCERTAIN
@@ -258,8 +296,8 @@ pack-manager/
 │   ├── main.py                # FastAPI app
 │   └── templates/             # Operator UI
 ├── tests/
-│   ├── unit/                  # 48 unit tests (engine, schemas, org isolation, quality)
-│   ├── integration/           # 3 live VLM tests (full pipeline, direct client, fail-open)
+│   ├── unit/                  # Engine, schemas, org isolation, quality, VLM retry, pending path
+│   ├── integration/           # Live VLM tests (need GEMINI_API_KEY)
 │   └── evaluation/            # Eval harness (51 synthetic + 29 CSV = 80 cases)
 ├── submissions/yogesh-101/    # Submission deliverables
 │   ├── 01-customer-letter.md
@@ -292,7 +330,7 @@ pack-manager/
 | Schemas | Pydantic v2 | Validated contracts, JSON Schema generation |
 | Storage | SQLite (WAL mode) | Zero-config, sufficient for individual build |
 | UI | Jinja2 templates | Minimal, functional, no build step |
-| Testing | pytest | 67 tests across 7 suites |
+| Testing | pytest | `python -m pytest tests -q` (99 tests on the current tree) |
 
 ---
 

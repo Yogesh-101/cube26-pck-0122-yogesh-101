@@ -1,6 +1,6 @@
 # Pack Manager — Architecture
 
-## System Architecture
+## System architecture
 
 ```
                     ┌─────────────────────────────────────────────────┐
@@ -30,7 +30,7 @@
               └───────────────┘    └────────────────┘
 ```
 
-## Data Flow
+## Data flow
 
 ```
 Order JSON ──┐
@@ -60,7 +60,7 @@ Gate ────────────────┘                │   (p
                           SQLite + Audit
 ```
 
-## Component Responsibilities
+## Components
 
 ### Input Validation (`app/domain/schemas.py`)
 - Enforces typed contracts via Pydantic v2
@@ -76,11 +76,13 @@ Gate ────────────────┘                │   (p
 - Flags issues as `is_uncertain` rather than rejecting — fail-open
 
 ### Gemini VLM Client (`app/vision/gemini_client.py`)
-- **One batched call per unit** (Engineering Rule 2)
-- Sends: system prompt + order context + catalogue + all images
+- **One batched call per unit** (Engineering Rule 2). The payload is built once: prompt, order lines, catalogue, and every usable photo.
+- Transient Gemini failures (HTTP 503, 429, 500, 504, timeouts, connection errors) are retried with bounded exponential backoff. `VLM_MAX_RETRIES` and `VLM_RETRY_BASE_SECONDS` come from settings. A 400 or 401 is not retried.
+- A success returns immediately, so a retry is a repeat of that same single call, not one call per check.
+- The model id sent to Gemini is `Settings.gemini_model`, default `gemini-2.5-flash` (`GEMINI_MODEL`).
 - Receives: structured JSON via `response_schema`
 - Returns: `ObservedItem[]` + quality assessment + notes
-- On failure: raises `VLMError` → caller does fail-open
+- On exhaustion or a non-retryable error: raises `VLMError`. The pipeline saves a `pending` inspection whose checks list carries the reason. The operator is not blocked.
 
 ### Decision Engine (`app/decision/engine.py`)
 - **Deterministic** — no AI in the decision path
@@ -101,34 +103,40 @@ Gate ────────────────┘                │   (p
 
 ### Storage (`app/storage/database.py`)
 - SQLite with WAL mode for read concurrency
-- Every query scoped to `org_id` (Engineering Rule 1)
-- Tested: org_demo_alpha cannot see org_demo_bravo data
-- Override records append-only — original AI decision never overwritten
+- Every read and write is scoped to `org_id` (Engineering Rule 1)
+- Tested: `org_demo_alpha` cannot see or override `org_demo_bravo` data, including by guessing an inspection id
+- New photographs are stored under `storage/images/<org_id>/<unit_id>/`. Path segments reject `..` escapes. There is no public image URL.
+- Override rows are append-only. `save_override` updates the `decision` column and leaves the stored `outcome` JSON as the agent's original verdict
 
 ### Pipeline Orchestration (`app/pipeline.py`)
 - Coordinates: validate → quality gate → VLM → engine → evidence
-- Fail-open on VLM errors: saves pending record with captured images
-- Fail-open on quality gate: flags uncertain, still processes
+- Fail-open on VLM errors: saves a pending record, images, and a check whose `detail` is the error text
+- If no image is usable, the same pending path runs and the vision client is not called
 
-## Model Usage
+## Model / agent usage
 
-| Stage | Technology | Rationale |
+The system is a **deterministic workflow with one Gemini call per unit**, not a multi-agent system.
+
+| Stage | Technology | What it actually does |
 |---|---|---|
-| Product identification | Gemini Flash VLM | #1 vision evals, 99% identification, structured output |
-| Quantity counting | Gemini Flash VLM | 80%+ counting accuracy, single call |
-| Image quality (basic) | Pillow + OpenCV | Deterministic, no model cost |
-| Decision logic | Python rule engine | Deterministic, testable, auditable |
-| Evidence hashing | hashlib SHA-256 | Standard, deterministic |
+| Product identification and counting | Gemini, model name from `GEMINI_MODEL` (default `gemini-2.5-flash`) | One `generate_content` request per unit. Prompt includes the order lines, the catalogue, and every usable photo. Structured JSON in, `ObservedItem` list out. |
+| Retry | Same client | Only transient upstream failures. Budget is `VLM_MAX_RETRIES` plus the inspection timeout. |
+| Image quality before the call | Pillow, and OpenCV when it is installed | Blur, brightness, size, duplicates. Unusable files are dropped from the batch. If none remain, no model call is made. |
+| Decision | `app/decision/engine.py` | No model. Five named checks. Any FAIL → `stop_and_fix` / `completed`. No FAIL and any UNCERTAIN → `stop_and_fix` / `pending_review`. All PASS → `seal`. UNCERTAIN never becomes a pass. |
+| Evidence hash | `hashlib.sha256` | Canonical JSON of the evidence record, excluding `content_hash`. |
 
-## Agent Workflow
+A second model call per check was rejected because Engineering Rule 2 requires one batched call per unit. The decision engine is covered by unit tests that never call Gemini.
 
-The system is a **deterministic workflow with a single VLM call**, not a multi-agent system. This was a deliberate architectural choice:
+## Important engineering decisions
 
-- Multi-agent would violate Engineering Rule 2 (batch model calls)
-- Additional agents add failure modes without accuracy gains at this catalogue scale
-- The deterministic decision engine is fully testable without the VLM
+1. **Organisation isolation before features.** Inspection, list, override, and evidence queries all filter on `org_id`. The API returns 404 when the id belongs to another org. Image directories include the organisation id so two tenants that reuse a unit id do not share a folder.
+2. **Fail-open.** A model error, timeout, or empty usable-photo set still persists the capture and a `pending` record. The reason is on `Inspection.checks` and on the evidence record. The results page shows that text and marks order lines **Not checked**.
+3. **Uncertain is a verdict.** Per-check values are `pass`, `fail`, and `uncertain`. The UI maps `pending_review` to NEEDS REVIEW. It is not displayed as SEAL.
+4. **Append-only overrides.** An override stores the original verdict, the new verdict, the operator id, and the reason. The `outcome` object written at inspection time is not replaced with the operator's decision. `GET /api/v1/inspections/{id}` adds `overrides` and `current_decision` without removing the original outcome.
+5. **One batched call.** All checks are computed from one vision response. Retries resend that same request. They do not split work into one call per check.
+6. **Honesty about the hash.** The content hash is an integrity fingerprint of JSON. The UI says it is not an anchored log. The code does not claim otherwise.
 
-## Failure Handling
+## Failure handling
 
 | Failure | Behavior | Record |
 |---|---|---|
@@ -158,10 +166,10 @@ The system is a **deterministic workflow with a single VLM call**, not a multi-a
 
 ## Deployment
 
-- Docker: `Dockerfile` + `docker-compose.yml`
-- Local: `uvicorn app.main:app --port 8000`
-- Cloud: Render / Railway / any container host
-- DB: SQLite file (production would use Postgres with RLS)
+- Docker: `Dockerfile` and `docker compose up --build`
+- Local: `python -m uvicorn app.main:app --host 127.0.0.1 --port 8000` from the repo root
+- Render: `render.yaml` declares a Docker web service named `pack-manager` on branch `main`. That file is not a live URL. A public URL exists only after the service is created in Render.
+- Database: a SQLite file in the working directory. Queries filter on `org_id`. This is not Postgres row-level security.
 
 ---
 
