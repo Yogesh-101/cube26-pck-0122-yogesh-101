@@ -18,11 +18,28 @@
     </div>
 </div>
 
+<div class="bench-rules" aria-label="Operating rules">
+    <span>Uncertain never seals</span>
+    <span>Model outage stays pending</span>
+    <span>One organisation at a time</span>
+    <span>Unit ID joins Returns and Recovery</span>
+</div>
+
 <div class="grid-4" style="margin-bottom: 18px;" id="stats">
     <div class="stat"><div class="stat-label">Total</div><div class="stat-value" id="stat-total">—</div><div class="stat-sub">inspections in this org</div></div>
     <div class="stat is-seal"><div class="stat-label">Sealed</div><div class="stat-value" id="stat-seal">—</div><div class="stat-sub">cleared to close</div></div>
     <div class="stat is-stop"><div class="stat-label">Stop &amp; fix</div><div class="stat-value" id="stat-stop">—</div><div class="stat-sub">discrepancy found</div></div>
     <div class="stat is-uncertain"><div class="stat-label">Needs review</div><div class="stat-value" id="stat-review">—</div><div class="stat-sub">agent declined to judge</div></div>
+</div>
+
+<div class="card" id="mix-card">
+    <div class="card-head">
+        <h2>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16"/><path d="M8 19V9M13 19V6M18 19v-7"/></svg>
+            Verdict mix
+        </h2>
+    </div>
+    <div id="verdict-mix"></div>
 </div>
 
 <div class="card">
@@ -92,7 +109,7 @@
         <div class="callout callout-info" style="margin-top: 14px;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/></svg>
             <span>Records carry a SHA-256 <strong>content hash</strong> over their canonical JSON. That detects
-            accidental change — it is not a tamper-proof or anchored ledger.</span>
+            accidental change of the evidence record.</span>
         </div>
     </div>
 </div>
@@ -107,12 +124,60 @@ function statusKey(item) {
     return window.PCK.presentDecision(item.decision, item.status).key;
 }
 
+const MIX = [
+    { key: 'seal', label: 'Seal', color: 'var(--seal)' },
+    { key: 'stop', label: 'Stop & fix', color: 'var(--stop)' },
+    { key: 'uncertain', label: 'Needs review', color: 'var(--uncertain)' },
+    { key: 'pending', label: 'Pending', color: 'var(--pending)' },
+];
+
 function renderStats() {
     const count = key => rows.filter(r => statusKey(r) === key).length;
     document.getElementById('stat-total').textContent = rows.length;
     document.getElementById('stat-seal').textContent = count('seal');
     document.getElementById('stat-stop').textContent = count('stop');
     document.getElementById('stat-review').textContent = count('uncertain');
+    renderMix();
+}
+
+function renderMix() {
+    const host = document.getElementById('verdict-mix');
+    if (!host) return;
+    if (!rows.length) {
+        host.innerHTML = `
+            <div class="empty" style="padding:28px 12px;">
+                <h3>No inspections in this organisation</h3>
+                <p>The mix is counted from records already loaded for the active org. There are none yet.</p>
+                <a href="/inspect" class="btn btn-primary">New inspection</a>
+            </div>`;
+        return;
+    }
+    const counts = {};
+    for (const item of MIX) counts[item.key] = rows.filter(r => statusKey(r) === item.key).length;
+    const total = rows.length;
+    const held = counts.stop + counts.uncertain;
+    const active = document.getElementById('filter').value;
+    const segments = MIX.filter(item => counts[item.key] > 0).map(item =>
+        `<button type="button" data-outcome="${item.key}" style="width:${(counts[item.key] / total) * 100}%;background:${item.color}" title="${esc(item.label)}: ${counts[item.key]}" aria-label="${esc(item.label)} ${counts[item.key]}"></button>`
+    ).join('');
+    const legend = MIX.map(item =>
+        `<button type="button" data-outcome="${item.key}" aria-pressed="${active === item.key ? 'true' : 'false'}">
+            <span class="mix-swatch" style="background:${item.color}"></span>${esc(item.label)} · ${counts[item.key]}
+        </button>`
+    ).join('');
+    host.innerHTML = `
+        <div class="mix-layout">
+            <div>
+                <div class="mix-bar" role="img" aria-label="Verdict mix for this organisation">${segments}</div>
+                <div class="mix-legend">${legend}</div>
+                <p class="hint" style="margin-top:10px;">Counted from the ${total} inspection${total === 1 ? '' : 's'} loaded for this org. A segment filters the table below.</p>
+            </div>
+            <div>
+                <div class="stat-label">Held before seal</div>
+                <div class="held-num">${held}</div>
+                <p class="hint">Stop &amp; fix plus needs review. Pending stays separate, and is not a seal.</p>
+            </div>
+        </div>`;
 }
 
 function renderTable() {

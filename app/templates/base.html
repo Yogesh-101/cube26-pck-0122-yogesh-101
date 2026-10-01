@@ -44,6 +44,7 @@
 
             --text: #e4e4e7;
             --text-muted: #a1a1aa;
+            --text-dim: #a1a1aa;
             --text-faint: #71717a;
 
             /* Blue aliases used across the page templates */
@@ -1015,6 +1016,148 @@
         }
         footer .container { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
 
+        /* Persistent operations shell */
+        .app-shell { display: flex; flex: 1 1 auto; width: 100%; min-height: 100vh; position: relative; z-index: 1; }
+        .side {
+            width: 248px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            padding: 18px 14px 16px;
+            background: rgba(5, 5, 5, 0.82);
+            border-right: 1px solid var(--border);
+            backdrop-filter: blur(18px);
+            z-index: 40;
+        }
+        .side-brand { display: flex; align-items: center; gap: 12px; padding: 4px 6px; text-decoration: none; min-width: 0; }
+        .side-brand .logo-name { display: block; font-family: var(--font-display); font-weight: 700; letter-spacing: -0.03em; color: var(--text); font-size: 1.02rem; }
+        .side-brand .logo-sub { display: block; margin-top: 1px; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); }
+        .side-label {
+            margin: 4px 8px 0;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-faint);
+        }
+        .side nav { display: flex; flex-direction: column; gap: 4px; margin-left: 0; width: 100%; }
+        .side nav a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 10px;
+            border-radius: 10px;
+            border: 1px solid transparent;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-decoration: none;
+            white-space: normal;
+        }
+        .side nav a svg { flex-shrink: 0; opacity: 0.85; }
+        .side nav a:hover { color: var(--text); background: rgba(10, 132, 255, 0.08); }
+        .side nav a.active {
+            color: var(--text);
+            background: rgba(10, 132, 255, 0.14);
+            border-color: rgba(158, 197, 255, 0.22);
+            box-shadow: none;
+        }
+        .side-note {
+            margin-top: auto;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: rgba(10, 132, 255, 0.06);
+            font-size: 0.78rem;
+            line-height: 1.45;
+            color: var(--text-dim);
+        }
+        .side-note strong { display: block; margin-bottom: 4px; color: var(--text); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; }
+        .app-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+        .topbar { padding: 14px 0 0; position: sticky; top: 0; z-index: 30; }
+        .topbar .container { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+        .bench-rules { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+        .bench-rules span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-dim);
+            font-size: 0.78rem;
+        }
+        .prove-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+        .prove-col { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); min-width: 0; }
+        .prove-col h3 { margin: 0 0 8px; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); }
+        .prove-col ul { margin: 0; padding-left: 1.15rem; }
+        .prove-col li { margin: 0 0 6px; color: var(--text-dim); font-size: 0.86rem; overflow-wrap: anywhere; }
+        .chain-strip { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
+        .chain-strip .station {
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            color: var(--text-faint);
+            font-size: 0.75rem;
+            letter-spacing: 0.04em;
+        }
+        .chain-strip .station.here {
+            color: var(--text);
+            border-color: rgba(158, 197, 255, 0.4);
+            background: rgba(10, 132, 255, 0.16);
+        }
+        .join-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+        .join-grid .copy-chip { width: 100%; justify-content: space-between; }
+        .timeline { list-style: none; margin: 0; padding: 0; }
+        .timeline li { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 12px; padding: 0 0 16px; position: relative; }
+        .timeline li:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 6px;
+            top: 16px;
+            bottom: 0;
+            width: 1px;
+            background: var(--border);
+        }
+        .tl-dot { width: 10px; height: 10px; margin-top: 5px; border-radius: 50%; background: var(--brand-500); box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.16); }
+        .tl-dot.seal { background: var(--seal); box-shadow: 0 0 0 3px var(--seal-soft); }
+        .tl-dot.stop { background: var(--stop); box-shadow: 0 0 0 3px var(--stop-soft); }
+        .tl-dot.uncertain { background: var(--uncertain); box-shadow: 0 0 0 3px var(--uncertain-soft); }
+        .tl-dot.pending { background: var(--pending); box-shadow: 0 0 0 3px var(--pending-soft); }
+        .tl-title { color: #fff; font-weight: 600; font-size: 0.9rem; }
+        .tl-time { margin-top: 2px; color: var(--text-faint); font-size: 0.75rem; font-family: var(--font-mono); }
+        .tl-detail { margin-top: 3px; color: var(--text-dim); font-size: 0.84rem; overflow-wrap: anywhere; }
+        .mix-layout { display: grid; grid-template-columns: minmax(0, 1fr) 180px; gap: 18px; align-items: center; }
+        .held-num { font-family: var(--font-display); font-size: 1.75rem; font-weight: 700; letter-spacing: -0.03em; color: var(--uncertain); line-height: 1.1; }
+        .mix-bar { display: flex; height: 14px; border-radius: 999px; overflow: hidden; background: var(--surface3); }
+        .mix-bar button { display: block; height: 100%; border: 0; padding: 0; min-width: 0; cursor: pointer; }
+        .mix-bar button:hover, .mix-bar button:focus-visible { filter: brightness(1.18); }
+        .mix-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .mix-legend button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text);
+            font: inherit;
+            font-size: 0.78rem;
+            cursor: pointer;
+        }
+        .mix-legend button[aria-pressed="true"] { border-color: rgba(158, 197, 255, 0.45); background: rgba(10, 132, 255, 0.14); }
+        .mix-swatch { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        tbody tr.row-link { cursor: pointer; }
+        tbody tr.row-link td:first-child { box-shadow: inset 3px 0 0 transparent; }
+        tbody tr.row-link:hover td { background: rgba(10, 132, 255, 0.08); }
+        tbody tr.row-link:hover td:first-child { box-shadow: inset 3px 0 0 var(--brand-500); }
+
         /* ==================================================================
            Responsive
            ================================================================== */
@@ -1030,33 +1173,32 @@
             header .container { padding: 8px 10px 8px 16px; gap: 12px; }
             .container { padding: 0 16px; }
             main { padding: 28px 0 64px; }
-            .grid-2 { grid-template-columns: minmax(0, 1fr); }
+            .grid-2, .prove-grid, .join-grid, .mix-layout { grid-template-columns: minmax(0, 1fr); }
             .card { padding: 18px; border-radius: var(--radius); }
             .decision-banner { padding: 20px; gap: 14px; border-radius: var(--radius); }
             .decision-banner .db-label { font-size: 1.375rem; }
 
-            .nav-toggle { display: grid; }
-            nav {
-                display: none;
-                position: absolute;
-                top: calc(100% + 10px);
-                left: 0;
-                right: 0;
-                flex-direction: column;
-                align-items: stretch;
-                gap: 6px;
+            .nav-toggle {
+                display: grid;
+                position: fixed;
+                top: 16px;
+                left: 12px;
+                z-index: 90;
                 margin: 0;
-                padding: 14px;
-                background: rgba(9, 9, 11, 0.96);
-                backdrop-filter: blur(18px) saturate(160%);
-                -webkit-backdrop-filter: blur(18px) saturate(160%);
-                border: 1px solid rgba(10, 132, 255, 0.3);
-                border-radius: var(--radius-lg);
-                box-shadow: var(--shadow-lg);
             }
-            nav.open { display: flex; }
-            .org-switch { width: 100%; justify-content: space-between; }
-            .org-switch input { width: 100%; }
+            .topbar .container { padding-left: 58px; justify-content: flex-end; }
+            .side {
+                position: fixed;
+                left: 0;
+                top: 0;
+                height: 100vh;
+                transform: translateX(-105%);
+                transition: transform 0.18s ease;
+                box-shadow: var(--shadow-lg);
+                z-index: 80;
+            }
+            .side.open { transform: none; }
+            .org-switch { width: auto; }
             #toasts { left: 16px; right: 16px; bottom: 16px; max-width: none; }
             .btn-block-sm { width: 100%; }
         }
@@ -1075,25 +1217,22 @@
 <body>
     <a href="#main" class="skip-link">Skip to content</a>
 
-    <header>
-        <div class="container">
-            <a href="/" class="logo">
+    <div class="app-shell">
+        <aside class="side" id="mainNav">
+            <a href="/" class="side-brand">
                 <span class="logo-mark" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 8v8a2 2 0 0 1-1 1.73l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 16V8a2 2 0 0 1 1-1.73l7-4a2 2 0 0 1 2 0l7 4A2 2 0 0 1 21 8z"/>
                         <path d="m3.3 7 8.7 5 8.7-5M12 22V12"/>
                     </svg>
                 </span>
-                Pack Manager
+                <span>
+                    <span class="logo-name">Pack Manager</span>
+                    <span class="logo-sub">Pre-seal bench</span>
+                </span>
             </a>
-
-            <button class="nav-toggle" type="button" id="navToggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mainNav">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                    <path d="M4 6h16M4 12h16M4 18h16"/>
-                </svg>
-            </button>
-
-            <nav id="mainNav" aria-label="Main">
+            <div class="side-label">Operations</div>
+            <nav aria-label="Main">
                 <a href="/" {% if active_page == 'dashboard' %}class="active" aria-current="page"{% endif %}>
                     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/>
@@ -1105,40 +1244,54 @@
                     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
                     </svg>
-                    New Inspection
-                </a>
-
-                <div class="org-switch">
-                    <label for="orgInput">Org</label>
-                    <input id="orgInput" list="orgOptions" spellcheck="false" autocomplete="off"
-                           aria-label="Active organisation ID" placeholder="org_...">
-                    <datalist id="orgOptions">
-                        <option value="org_demo_alpha"></option>
-                        <option value="org_demo_bravo"></option>
-                    </datalist>
-                </div>
-
-                <a class="health" href="/api/v1/health" target="_blank" rel="noopener" title="API health">
-                    <span class="dot" id="healthDot"></span>
-                    <span id="healthText">API</span>
+                    New inspection
                 </a>
             </nav>
-        </div>
-    </header>
+            <div class="side-note">
+                <strong>Bench rule</strong>
+                Uncertain never seals. A model outage stays pending. Returns and Recovery look this unit up later. Pack does not invent a verdict they cannot defend.
+            </div>
+        </aside>
 
-    <main id="main">
-        <div class="container">
-            {% block content %}{% endblock %}
-        </div>
-    </main>
+        <div class="app-main">
+            <header class="topbar">
+                <div class="container">
+                    <button class="nav-toggle" type="button" id="navToggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mainNav">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                            <path d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    <div class="org-switch">
+                        <label for="orgInput">Org</label>
+                        <input id="orgInput" list="orgOptions" spellcheck="false" autocomplete="off"
+                               aria-label="Active organisation ID" placeholder="org_...">
+                        <datalist id="orgOptions">
+                            <option value="org_demo_alpha"></option>
+                            <option value="org_demo_bravo"></option>
+                        </datalist>
+                    </div>
+                    <a class="health" href="/api/v1/health" target="_blank" rel="noopener" title="API health">
+                        <span class="dot" id="healthDot"></span>
+                        <span id="healthText">API</span>
+                    </a>
+                </div>
+            </header>
 
-    <footer>
-        <div class="container">
-            <span>Pack Manager v1.0.0</span>
-            <span class="spacer"></span>
-            <span>Evidence schema 1.0.0</span>
+            <main id="main">
+                <div class="container">
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
+
+            <footer>
+                <div class="container">
+                    <span>Pack Manager v1.0.0</span>
+                    <span class="spacer"></span>
+                    <span>Evidence schema 1.0.0 · content hash is SHA-256 of the evidence record</span>
+                </div>
+            </footer>
         </div>
-    </footer>
+    </div>
 
     <div id="toasts" role="status" aria-live="polite" aria-atomic="false"></div>
 

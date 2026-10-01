@@ -252,4 +252,6 @@ def _row_to_dict(row: sqlite3.Row) -> dict:
         "evidence_record": data.get("evidence_record"),
         "catalogue": data.get("catalogue", []),
     }
+    if data.get("created_at"):
+        result["created_at"] = data["created_at"]
     return result

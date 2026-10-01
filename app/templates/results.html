@@ -106,6 +106,88 @@ const titleise = window.PCK.titleise;
 
 function pct(value) { return Math.round((Number(value) || 0) * 100); }
 
+function stampOf(value) {
+    if (value === null || value === undefined || value === '') return null;
+    const raw = String(value);
+    const ms = Date.parse(raw);
+    return { raw, ms: Number.isNaN(ms) ? null : ms };
+}
+
+function formatStamp(raw) {
+    const ms = Date.parse(raw);
+    if (Number.isNaN(ms)) return raw;
+    try { return new Date(ms).toLocaleString(undefined, { hour12: false }); }
+    catch (e) { return raw; }
+}
+
+/* Chronological record built only from fields on the payload.
+   Events with no timestamp keep their place in that sequence and render no clock. */
+function buildTimeline(data, evidence, checks, outcome, overrides, images) {
+    const events = [];
+    let seq = 0;
+    function add(when, title, detail, tone) {
+        events.push({ stamp: stampOf(when), seq: seq++, title, detail, tone: tone || 'info' });
+    }
+
+    const created = data.created_at || null;
+    const captured = evidence.captured_at || null;
+    if (created) add(created, 'Inspection stored', 'Written for this organisation.', 'info');
+    if (captured && captured !== created) {
+        const n = (images || []).length;
+        add(captured, 'Capture recorded', n ? n + ' photo reference' + (n === 1 ? '' : 's') + ' on the evidence record.' : 'Capture time on the evidence record.', 'info');
+    } else if (!created && captured) {
+        add(captured, 'Capture recorded', 'Capture time on the evidence record.', 'info');
+    }
+
+    for (const img of images || []) {
+        if (!img || !img.captured_at) continue;
+        if (img.captured_at === captured || img.captured_at === created) continue;
+        add(img.captured_at, 'Photo captured', img.image_id || 'Photograph', 'info');
+    }
+
+    for (const c of checks) {
+        const tone = c.verdict === 'pass' ? 'seal' : c.verdict === 'fail' ? 'stop' : (c.verdict === 'uncertain' ? 'uncertain' : 'pending');
+        add(null, titleise(c.check_key), String(c.verdict || 'recorded').toUpperCase() + (c.detail ? ' — ' + c.detail : ''), tone);
+    }
+
+    if (outcome && outcome.decision) {
+        const pres = window.PCK.presentDecision(outcome.decision, data.status === 'pending' ? 'pending' : 'completed');
+        add(outcome.decided_at || null, 'Agent decision', pres.label + (outcome.decided_by ? ' · ' + outcome.decided_by : ''), pres.cls);
+    } else if (data.status === 'pending') {
+        add(null, 'Decision withheld', 'A model outage is pending, never a pass.', 'pending');
+    }
+
+    if (evidence.content_hash) {
+        add(captured || null, 'Content hash', 'SHA-256 of the canonical evidence JSON: ' + evidence.content_hash, 'info');
+    }
+
+    for (const o of overrides) {
+        const to = window.PCK.presentDecision(o.new_decision, 'completed');
+        add(o.overridden_at || null, 'Operator override', (o.operator_id || 'Operator') + ' set ' + to.label + (o.reason ? ' — ' + o.reason : ''), to.cls);
+    }
+
+    let anchor = null;
+    for (const event of events) {
+        if (event.stamp && event.stamp.ms !== null) anchor = event.stamp.ms;
+        event.sortMs = event.stamp && event.stamp.ms !== null ? event.stamp.ms : (anchor === null ? -1 : anchor);
+    }
+    events.sort((a, b) => (a.sortMs - b.sortMs) || (a.seq - b.seq));
+    return events;
+}
+
+function joinButton(label, value, copyLabel) {
+    if (!value) {
+        return `<div><div class="stat-label">${label}</div><p class="muted">Not on this record.</p></div>`;
+    }
+    return `<div>
+        <div class="stat-label">${label}</div>
+        <button type="button" class="copy-chip" data-copy="${esc(value)}" data-copy-label="${esc(copyLabel)}">
+            <span>${esc(value)}</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>
+        </button>
+    </div>`;
+}
+
 function confBand(value) {
     if (value >= 0.7) return 'conf-high';
     if (value >= 0.5) return 'conf-mid';
@@ -268,6 +350,65 @@ function renderResults(data, container, orgId) {
             <span class="mono">${esc(last.operator_id)}</span> changed it to <strong>${d.label}</strong>.
             Both verdicts are kept — see the override history below.</span>
         </div>`;
+    }
+
+    html += `<div class="chain-strip" aria-label="Where this record sits in the evidence chain">
+        <span class="station">Receiving</span>
+        <span class="station">Prep</span>
+        <span class="station here">Pack — this bench</span>
+        <span class="station">Returns</span>
+        <span class="station">Recovery</span>
+    </div>`;
+
+    const supports = checks.filter(c => c.verdict === 'pass').map(c =>
+        titleise(c.check_key) + (c.detail ? ' — ' + c.detail : ''));
+    const withholds = checks.filter(c => c.verdict !== 'pass').map(c =>
+        titleise(c.check_key) + (c.detail ? ' — ' + c.detail : ''));
+    if (data.status === 'pending') {
+        supports.length = 0;
+        withholds.unshift('No physical proof was judged. A model outage is pending, never a pass.');
+    }
+    html += `<div class="card">
+        <div class="card-head"><h2>What this record can and cannot support</h2></div>
+        <div class="prove-grid">
+            <div class="prove-col">
+                <h3>Established</h3>
+                <ul>${supports.length ? supports.map(s => '<li>' + esc(s) + '</li>').join('') : '<li>Nothing was confirmed.</li>'}</ul>
+            </div>
+            <div class="prove-col">
+                <h3>Not established</h3>
+                <ul>${withholds.length ? withholds.map(s => '<li>' + esc(s) + '</li>').join('') : '<li>No check withheld a conclusion.</li>'}</ul>
+            </div>
+        </div>
+    </div>`;
+
+    html += `<div class="card">
+        <div class="card-head"><h2>Join identifiers</h2></div>
+        <p class="hint" style="margin-bottom:12px;">Returns and Recovery look this unit up later. Pack does not file a fee dispute.</p>
+        <div class="join-grid">
+            ${joinButton('Unit', order.unit_id, 'Unit ID copied')}
+            ${joinButton('Order', order.order_id, 'Order ID copied')}
+        </div>
+    </div>`;
+
+    const timeline = buildTimeline(data, evidence, checks, outcome, overrides, images);
+    if (timeline.length) {
+        html += `<div class="card">
+            <div class="card-head"><h2>Evidence timeline</h2></div>
+            <p class="hint" style="margin-bottom:14px;">Append-only. Later overrides stay on the record after the agent decision. Each hash line is the SHA-256 of the canonical evidence JSON.</p>
+            <ol class="timeline">`;
+        for (const event of timeline) {
+            const stamp = event.stamp ? `<div class="tl-time">${esc(formatStamp(event.stamp.raw))}</div>` : '';
+            html += `<li>
+                <span class="tl-dot ${esc(event.tone)}"></span>
+                <div>
+                    <div class="tl-title">${esc(event.title)}</div>
+                    ${stamp}
+                    <div class="tl-detail">${esc(event.detail)}</div>
+                </div>
+            </li>`;
+        }
+        html += `</ol></div>`;
     }
 
     const visiblePhotos = images.filter(img => img && img.image_id);
@@ -447,13 +588,12 @@ function renderResults(data, container, orgId) {
                 </tbody></table>
             </div>
 
-            <div class="section-title" style="margin-top:18px;">Content hash (SHA-256)</div>
+            <div class="section-title" style="margin-top:18px;">SHA-256 of the canonical evidence JSON</div>
             <button type="button" class="copy-chip" id="hashChip" title="Copy hash">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>
                 <span>${esc(evidence.content_hash) || '—'}</span>
             </button>
-            <p class="hint" style="margin-top:9px;">Hash over the record's canonical JSON. It detects accidental
-               change; it is not an anchored or tamper-proof log.</p>
+            <p class="hint" style="margin-top:9px;">SHA-256 of the canonical evidence JSON. It detects accidental change of that record.</p>
         </div>
 
         <div class="card">
@@ -490,6 +630,10 @@ function renderResults(data, container, orgId) {
     container.innerHTML = html;
 
     /* ---- Behaviour ---- */
+    container.querySelectorAll('[data-copy]').forEach(btn => {
+        btn.addEventListener('click', () => window.PCK.copy(btn.getAttribute('data-copy'), btn.getAttribute('data-copy-label') || 'Copied'));
+    });
+
     const hashChip = document.getElementById('hashChip');
     if (hashChip && evidence.content_hash) {
         hashChip.addEventListener('click', () => window.PCK.copy(evidence.content_hash, 'Content hash copied'));
