@@ -12,7 +12,6 @@
 | Eval Report | [eval-report.md](eval-report.md) |
 | Build Log | [build-log.md](build-log.md) |
 | Evidence Contract | [contract/](contract/) |
-| LinkedIn draft | [linkedin-post-draft.md](linkedin-post-draft.md) |
 
 ## Layout
 
@@ -26,7 +25,6 @@ submissions/yogesh-101/
 ├── build-brief.md
 ├── build-log.md
 ├── eval-report.md
-├── linkedin-post-draft.md
 └── contract/evidence-record.json
 ```
 
