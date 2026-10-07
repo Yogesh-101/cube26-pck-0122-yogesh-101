@@ -117,6 +117,8 @@ class ImageInput(BaseModel):
     sha256: Optional[str] = None
     blur_score: Optional[float] = None
     brightness: Optional[float] = None
+    contrast: Optional[float] = None
+    quality_engine: Optional[str] = None
     is_duplicate: bool = False
 
 

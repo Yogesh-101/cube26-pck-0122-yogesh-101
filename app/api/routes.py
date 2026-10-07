@@ -47,6 +47,42 @@ _inspections: dict[str, dict] = {}
 # Initialize database on module load
 init_database()
 
+
+@router.post("/api/v1/quality/check")
+async def quality_check(
+    images: list[UploadFile] = File(..., description="One or more photos (upload or live capture)"),
+):
+    """
+    OpenCV quality pre-check for uploads and live camera snapshots.
+
+    Returns per-image blur / brightness / contrast / clip metrics so the
+    operator can retake a bad frame before spending a Gemini call.
+    """
+    from app.vision.quality import assess_image_bytes
+
+    if not images:
+        raise HTTPException(status_code=422, detail="At least one image is required")
+
+    results = []
+    for upload in images:
+        content = await upload.read()
+        name = upload.filename or "capture.jpg"
+        result = assess_image_bytes(content, label=name, source="upload")
+        results.append(result.to_dict())
+
+    any_bad = any((not r["is_usable"]) or r["is_uncertain"] for r in results)
+    return {
+        "engine": results[0]["engine"] if results else None,
+        "ok": not any_bad,
+        "n": len(results),
+        "results": results,
+        "advice": (
+            "Retake photos that are dark, blurry, or low-contrast before verifying."
+            if any_bad
+            else "Image quality looks sufficient for pack verification."
+        ),
+    }
+
 _UNSAFE_PATH_CHARS = re.compile(r"[^A-Za-z0-9._-]+")
 
 

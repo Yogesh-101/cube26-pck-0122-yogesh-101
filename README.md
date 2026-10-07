@@ -57,8 +57,8 @@ Order + Catalogue → Input Validation → Image Quality Gate → Gemini VLM (si
 | Decision | Rationale |
 |---|---|
 | Single batched VLM call per unit | Engineering Rule 2: one call carrying all checks, not one per check |
-| **Order-blind VLM prompt** | Expected order never sent to Gemini — closes re-score "order in prompt" gap |
-| Deterministic decision engine | Final SEAL/STOP never depends on raw LLM output |
+| **OpenCV quality gate** | Blur, low light, contrast, and clipped regions checked on uploads and live capture before Gemini |
+| **Order-blind VLM prompt** | Expected order never sent to Gemini — closes re-score "order in prompt" gap || Deterministic decision engine | Final SEAL/STOP never depends on raw LLM output |
 | Held-out photo eval | `data/eval/held_out/` real product photos; results in `data/eval/results/` |
 | UNCERTAIN → human review | Never auto-seal when evidence is insufficient |
 | Fail-open on errors | Engineering Rule 3: model timeout saves pending record, never blocks operator |

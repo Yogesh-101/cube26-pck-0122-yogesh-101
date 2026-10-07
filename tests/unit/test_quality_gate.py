@@ -1,7 +1,7 @@
 """
-Tests for the image quality gate.
+Tests for the OpenCV image quality gate.
 
-Verifies that unusable images are rejected before wasting model calls.
+Covers uploads, low light, blur, and held-out ambiguous fixtures.
 """
 
 import os
@@ -9,12 +9,19 @@ import tempfile
 
 import pytest
 
-from app.vision.quality import assess_image_quality, assess_batch_quality, compute_file_sha256
+from app.vision.quality import (
+    ENGINE_OPENCV,
+    assess_batch_quality,
+    assess_image_bytes,
+    assess_image_quality,
+    compute_file_sha256,
+    _opencv_available,
+)
 
 
 @pytest.fixture
 def tmp_image():
-    """Create a sharp, well-lit test image (checkerboard so blur score is healthy)."""
+    """Sharp, well-lit checkerboard — should pass the OpenCV gate."""
     from PIL import Image, ImageDraw
 
     fd, path = tempfile.mkstemp(suffix=".jpg")
@@ -33,13 +40,16 @@ def tmp_image():
 
 @pytest.fixture
 def dark_image():
-    """Create a very dark image."""
-    from PIL import Image
+    """Very dark but with slight texture so decode stays valid."""
+    from PIL import Image, ImageDraw
 
     fd, path = tempfile.mkstemp(suffix=".jpg")
     os.close(fd)
-    img = Image.new("RGB", (640, 480), color=(10, 10, 10))
-    img.save(path, "JPEG")
+    img = Image.new("RGB", (640, 480), color=(12, 12, 12))
+    draw = ImageDraw.Draw(img)
+    for y in range(0, 480, 80):
+        draw.line([(0, y), (640, y)], fill=(28, 28, 28), width=2)
+    img.save(path, "JPEG", quality=90)
     yield path
     if os.path.exists(path):
         os.unlink(path)
@@ -47,13 +57,16 @@ def dark_image():
 
 @pytest.fixture
 def bright_image():
-    """Create an overexposed image."""
-    from PIL import Image
+    """Nearly overexposed frame."""
+    from PIL import Image, ImageDraw
 
     fd, path = tempfile.mkstemp(suffix=".jpg")
     os.close(fd)
-    img = Image.new("RGB", (640, 480), color=(252, 252, 252))
-    img.save(path, "JPEG")
+    img = Image.new("RGB", (640, 480), color=(250, 250, 250))
+    draw = ImageDraw.Draw(img)
+    for y in range(0, 480, 80):
+        draw.line([(0, y), (640, y)], fill=(255, 255, 255), width=2)
+    img.save(path, "JPEG", quality=90)
     yield path
     if os.path.exists(path):
         os.unlink(path)
@@ -61,7 +74,6 @@ def bright_image():
 
 @pytest.fixture
 def tiny_image():
-    """Create a tiny (resolution too low) image."""
     from PIL import Image
 
     fd, path = tempfile.mkstemp(suffix=".jpg")
@@ -73,12 +85,33 @@ def tiny_image():
         os.unlink(path)
 
 
+@pytest.fixture
+def blurry_image():
+    """Heavily blurred pack-like frame — Laplacian should be low."""
+    from PIL import Image, ImageDraw, ImageFilter
+
+    fd, path = tempfile.mkstemp(suffix=".jpg")
+    os.close(fd)
+    img = Image.new("RGB", (640, 480), color=(140, 140, 140))
+    draw = ImageDraw.Draw(img)
+    draw.rectangle([80, 80, 560, 400], fill=(90, 90, 90))
+    draw.ellipse([200, 160, 440, 320], fill=(180, 180, 180))
+    img = img.filter(ImageFilter.GaussianBlur(radius=12))
+    img.save(path, "JPEG", quality=85)
+    yield path
+    if os.path.exists(path):
+        os.unlink(path)
+
+
 class TestImageQuality:
     def test_valid_image(self, tmp_image):
         result = assess_image_quality(tmp_image)
         assert result.is_usable is True
+        assert result.is_uncertain is False
         assert result.sha256 != ""
         assert len(result.sha256) == 64
+        if _opencv_available():
+            assert result.engine == ENGINE_OPENCV
 
     def test_missing_file(self):
         result = assess_image_quality("/nonexistent/path.jpg")
@@ -87,17 +120,29 @@ class TestImageQuality:
 
     def test_dark_image_flagged(self, dark_image):
         result = assess_image_quality(dark_image)
-        assert result.is_uncertain is True
-        assert any("dark" in i.lower() for i in result.issues)
+        assert result.is_uncertain is True or result.is_usable is False
+        assert any("dark" in i.lower() or "light" in i.lower() or "underexpose" in i.lower() for i in result.issues)
 
     def test_bright_image_flagged(self, bright_image):
         result = assess_image_quality(bright_image)
+        assert result.is_uncertain is True or result.is_usable is False
+        assert any("overexpose" in i.lower() or "bright" in i.lower() for i in result.issues)
+
+    def test_blurry_image_flagged(self, blurry_image):
+        result = assess_image_quality(blurry_image)
         assert result.is_uncertain is True
-        assert any("overexposed" in i.lower() or "bright" in i.lower() for i in result.issues)
+        assert any("blur" in i.lower() for i in result.issues)
 
     def test_tiny_image_rejected(self, tiny_image):
         result = assess_image_quality(tiny_image)
         assert result.is_usable is False
+
+    def test_bytes_upload_path(self, tmp_image):
+        data = open(tmp_image, "rb").read()
+        result = assess_image_bytes(data, label="upload.jpg", source="upload")
+        assert result.is_usable is True
+        assert result.source == "upload"
+        assert result.sha256 == compute_file_sha256(tmp_image)
 
     def test_sha256_deterministic(self, tmp_image):
         h1 = compute_file_sha256(tmp_image)
@@ -105,10 +150,13 @@ class TestImageQuality:
         assert h1 == h2
         assert len(h1) == 64
 
+    def test_to_dict_contract(self, tmp_image):
+        d = assess_image_quality(tmp_image).to_dict()
+        assert "blur_score" in d and "contrast" in d and "ok_to_seal_path" in d
+
 
 class TestHeldOutAmbiguousFixtures:
     def test_ambig_fixtures_flagged_uncertain(self):
-        """Blur/dark held-out AMBIG photos must never look 'clean' to the gate."""
         from pathlib import Path
 
         root = Path(__file__).resolve().parents[2] / "data" / "eval" / "held_out" / "images"
@@ -118,6 +166,8 @@ class TestHeldOutAmbiguousFixtures:
             result = assess_image_quality(str(root / name))
             assert result.is_usable is True
             assert result.is_uncertain is True, f"{name} should be uncertain: {result.issues}"
+            if _opencv_available():
+                assert result.engine == ENGINE_OPENCV
 
 
 class TestBatchQuality:

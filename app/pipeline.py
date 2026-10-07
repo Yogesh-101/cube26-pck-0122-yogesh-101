@@ -67,6 +67,8 @@ def run_inspection(
             sha256=r.sha256,
             blur_score=r.blur_score,
             brightness=r.brightness,
+            contrast=getattr(r, "contrast", None),
+            quality_engine=getattr(r, "engine", None),
             is_duplicate=any("Duplicate" in issue for issue in r.issues),
         )
         for r in quality_results

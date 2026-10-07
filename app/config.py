@@ -37,9 +37,10 @@ class Settings(BaseModel):
 
     # Vision
     confidence_threshold: float = Field(default=0.5)
-    image_quality_blur_threshold: float = Field(default=100.0)
-    image_quality_brightness_min: float = Field(default=40.0)
-    image_quality_brightness_max: float = Field(default=250.0)
+    image_quality_blur_threshold: float = Field(default=50.0)
+    image_quality_brightness_min: float = Field(default=85.0)
+    image_quality_brightness_max: float = Field(default=245.0)
+    image_quality_contrast_min: float = Field(default=18.0)
     max_image_size_mb: int = Field(default=20)
     vlm_timeout_seconds: int = Field(default=60)
     vlm_max_retries: int = Field(default=2)

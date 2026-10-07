@@ -308,12 +308,32 @@
                     </span>
                     <strong>Drop photos here, or click to browse</strong>
                     <span class="hint">JPG, PNG or WebP. Shoot the <b>open</b> box so every item is visible —
-                        a clear photo is what lets the agent commit to a verdict.</span>
+                        OpenCV checks blur, low light, and contrast before the model runs.</span>
                 </div>
-                <input type="file" id="fileInput" accept="image/*" multiple class="sr-only" tabindex="-1">
+                <input type="file" id="fileInput" accept="image/*" multiple capture="environment" class="sr-only" tabindex="-1">
+
+                <div class="btn-row" style="margin-top: 12px; flex-wrap: wrap; gap: 8px;">
+                    <button type="button" class="btn btn-ghost btn-sm" id="liveCaptureBtn">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        Live capture
+                    </button>
+                    <button type="button" class="btn btn-ghost btn-sm" id="qualityCheckBtn">
+                        Check quality (OpenCV)
+                    </button>
+                    <span class="hint" id="qualityHint"></span>
+                </div>
+
+                <div id="livePanel" hidden style="margin-top:12px;">
+                    <video id="liveVideo" autoplay playsinline muted style="width:100%;max-height:280px;border-radius:8px;background:#111;"></video>
+                    <div class="btn-row" style="margin-top:8px;gap:8px;">
+                        <button type="button" class="btn btn-primary btn-sm" id="snapBtn">Snap frame</button>
+                        <button type="button" class="btn btn-ghost btn-sm" id="closeLiveBtn">Close camera</button>
+                    </div>
+                </div>
 
                 <div class="thumbs" id="thumbs"></div>
                 <p class="hint" id="fileCount" style="margin-top: 12px;">No photos selected yet.</p>
+                <div id="qualityReport" aria-live="polite"></div>
             </div>
 
             <!-- Step 4 — catalogue -->
@@ -410,7 +430,13 @@ function humanSize(bytes) {
     return (bytes / 1024 / 1024).toFixed(1) + ' MB';
 }
 
-function addFiles(fileList) {
+const qualityByKey = new Map(); // name+size → quality dict
+
+function fileKey(file) {
+    return `${file.name}::${file.size}::${file.lastModified || 0}`;
+}
+
+async function addFiles(fileList) {
     const incoming = Array.from(fileList).filter(f => f.type.startsWith('image/'));
     const rejected = fileList.length - incoming.length;
     if (rejected > 0) {
@@ -421,12 +447,21 @@ function addFiles(fileList) {
         if (!dupe) selected.push(file);
     }
     renderThumbs();
+    await runQualityCheck(false);
+}
+
+function qualityBadge(q) {
+    if (!q) return '<span class="hint">checking…</span>';
+    if (!q.is_usable) return '<span class="badge badge-stop no-dot">Unusable</span>';
+    if (q.is_uncertain) return '<span class="badge badge-uncertain no-dot">Retake?</span>';
+    return '<span class="badge badge-seal no-dot">OK</span>';
 }
 
 function renderThumbs() {
     thumbs.innerHTML = '';
     selected.forEach((file, index) => {
         const url = URL.createObjectURL(file);
+        const q = qualityByKey.get(fileKey(file));
         const cell = document.createElement('div');
         cell.className = 'thumb';
         cell.innerHTML = `
@@ -434,20 +469,123 @@ function renderThumbs() {
             <button type="button" class="thumb-x" aria-label="Remove ${esc(file.name)}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
-            <div class="thumb-meta"><b class="truncate">${esc(file.name)}</b>${humanSize(file.size)}</div>`;
+            <div class="thumb-meta"><b class="truncate">${esc(file.name)}</b>${humanSize(file.size)} · ${qualityBadge(q)}</div>`;
         cell.querySelector('img').addEventListener('load', () => URL.revokeObjectURL(url), { once: true });
         cell.querySelector('.thumb-x').addEventListener('click', () => {
+            qualityByKey.delete(fileKey(file));
             selected.splice(index, 1);
             renderThumbs();
+            renderQualityReport();
         });
         thumbs.appendChild(cell);
     });
 
     document.getElementById('fileCount').textContent = selected.length
-        ? `${selected.length} photo${selected.length === 1 ? '' : 's'} ready — all sent in a single model call.`
+        ? `${selected.length} photo${selected.length === 1 ? '' : 's'} ready — OpenCV gate + one model call.`
         : 'No photos selected yet.';
     syncReady();
 }
+
+async function runQualityCheck(toast = true) {
+    const hint = document.getElementById('qualityHint');
+    const report = document.getElementById('qualityReport');
+    if (!selected.length) {
+        report.innerHTML = '';
+        hint.textContent = '';
+        return null;
+    }
+    hint.textContent = 'Running OpenCV checks…';
+    const fd = new FormData();
+    selected.forEach(f => fd.append('images', f));
+    try {
+        const res = await fetch('/api/v1/quality/check', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (!res.ok) throw new Error(typeof data.detail === 'string' ? data.detail : 'Quality check failed');
+        (data.results || []).forEach((r, i) => {
+            if (selected[i]) qualityByKey.set(fileKey(selected[i]), r);
+        });
+        renderThumbs();
+        renderQualityReport(data);
+        hint.textContent = data.ok ? `OpenCV OK (${data.engine})` : `OpenCV flagged issues (${data.engine})`;
+        if (toast) window.PCK.toast(data.advice, data.ok ? 'seal' : 'uncertain');
+        return data;
+    } catch (err) {
+        hint.textContent = '';
+        if (toast) window.PCK.toast(err.message || 'Quality check failed', 'stop');
+        return null;
+    }
+}
+
+function renderQualityReport(data) {
+    const report = document.getElementById('qualityReport');
+    if (!data || !data.results) { report.innerHTML = ''; return; }
+    const rows = data.results.map(r => {
+        const tone = !r.is_usable ? 'stop' : r.is_uncertain ? 'uncertain' : 'seal';
+        const issues = (r.issues || []).map(esc).join('; ') || 'No issues';
+        return `<li><strong class="msg-${tone === 'seal' ? 'ok' : tone}">${esc(r.path)}</strong>
+            · blur ${r.blur_score} · bright ${r.brightness} · contrast ${r.contrast}
+            <br><span class="hint">${issues}</span></li>`;
+    }).join('');
+    report.innerHTML = `
+        <div class="callout callout-${data.ok ? 'info' : 'uncertain'}" style="margin-top:12px;">
+            <span><strong>${esc(data.advice)}</strong><ul style="margin:8px 0 0 1.1rem;">${rows}</ul></span>
+        </div>`;
+}
+
+/* Live camera capture → JPEG file → same OpenCV path as uploads */
+let liveStream = null;
+const livePanel = document.getElementById('livePanel');
+const liveVideo = document.getElementById('liveVideo');
+
+async function openLive() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        window.PCK.toast('Camera not available in this browser', 'stop');
+        return;
+    }
+    try {
+        liveStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' } },
+            audio: false,
+        });
+        liveVideo.srcObject = liveStream;
+        livePanel.hidden = false;
+    } catch (err) {
+        window.PCK.toast('Could not open camera: ' + (err.message || err), 'stop');
+    }
+}
+
+function closeLive() {
+    if (liveStream) {
+        liveStream.getTracks().forEach(t => t.stop());
+        liveStream = null;
+    }
+    liveVideo.srcObject = null;
+    livePanel.hidden = true;
+}
+
+async function snapLive() {
+    if (!liveVideo.videoWidth) {
+        window.PCK.toast('Camera not ready yet', 'uncertain');
+        return;
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = liveVideo.videoWidth;
+    canvas.height = liveVideo.videoHeight;
+    canvas.getContext('2d').drawImage(liveVideo, 0, 0);
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+    if (!blob) {
+        window.PCK.toast('Could not capture frame', 'stop');
+        return;
+    }
+    const file = new File([blob], `live-${Date.now()}.jpg`, { type: 'image/jpeg' });
+    await addFiles([file]);
+    window.PCK.toast('Live frame added — OpenCV quality checked', 'seal');
+}
+
+document.getElementById('liveCaptureBtn').addEventListener('click', openLive);
+document.getElementById('closeLiveBtn').addEventListener('click', closeLive);
+document.getElementById('snapBtn').addEventListener('click', snapLive);
+document.getElementById('qualityCheckBtn').addEventListener('click', () => runQualityCheck(true));
 
 dropzone.addEventListener('click', () => fileInput.click());
 dropzone.addEventListener('keydown', e => {
