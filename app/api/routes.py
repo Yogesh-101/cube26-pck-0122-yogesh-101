@@ -100,13 +100,64 @@ async def persist_uploads(image_dir: Path, images: list[UploadFile], max_mb: int
     return saved
 
 
+def _storage_roots(settings=None) -> tuple[Path, Path]:
+    """Return (storage_root, image_root) as absolute paths."""
+    settings = settings or get_settings()
+    image_root = Path(settings.image_storage_path).expanduser().resolve()
+    # Prefer explicit STORAGE_ROOT; otherwise the parent of the images dir.
+    storage_root = Path(settings.storage_root).expanduser().resolve()
+    return storage_root, image_root
+
+
+def relativize_inspection_paths(inspection_data: dict, storage_root: str | Path) -> dict:
+    """
+    Rewrite absolute capture paths to paths relative to the storage root.
+
+    Absolute host paths break after restart/redeploy. Relative paths stay valid
+    as long as the storage volume is mounted at the same IMAGE_STORAGE_PATH /
+    STORAGE_ROOT.
+    """
+    root = Path(storage_root).expanduser().resolve()
+
+    def _rel(path_str: str) -> str:
+        try:
+            return str(Path(path_str).expanduser().resolve().relative_to(root)).replace("\\", "/")
+        except (ValueError, OSError):
+            return path_str
+
+    for img in inspection_data.get("images") or []:
+        if img.get("path"):
+            img["path"] = _rel(img["path"])
+
+    evidence = inspection_data.get("evidence_record")
+    if isinstance(evidence, dict):
+        for img in evidence.get("images") or []:
+            if img.get("path"):
+                img["path"] = _rel(img["path"])
+
+    return inspection_data
+
+
+def persist_inspection(inspection_data: dict) -> None:
+    """Normalize paths, write SQLite, keep an in-process cache for the same worker."""
+    settings = get_settings()
+    storage_root, _ = _storage_roots(settings)
+    relativize_inspection_paths(inspection_data, storage_root)
+    _inspections[inspection_data["inspection_id"]] = inspection_data
+    try:
+        db_save_inspection(inspection_data)
+    except Exception as e:
+        # Fail-open for the operator response, but log loudly — lost rows are a bug.
+        logger.error("DB save failed (fail-open): %s", e, exc_info=True)
+
+
 def resolve_inspection_image(inspection: dict, image_id: str, storage_root: str | Path) -> Optional[Path]:
     """
     Return the capture file only when this inspection lists that image id
     and the stored path stays inside the storage root.
 
+    Accepts relative paths (preferred, durable) or absolute paths (legacy rows).
     Callers must already have loaded the inspection for the requesting org.
-    A path that escapes the root, or an id that is not on this record, returns None.
     """
     listed = list(inspection.get("images") or [])
     evidence = inspection.get("evidence_record") or {}
@@ -116,8 +167,9 @@ def resolve_inspection_image(inspection: dict, image_id: str, storage_root: str 
     if not match or not match.get("path"):
         return None
 
-    root = Path(storage_root).resolve()
-    path = Path(match["path"]).resolve()
+    root = Path(storage_root).expanduser().resolve()
+    raw = Path(match["path"])
+    path = (root / raw).resolve() if not raw.is_absolute() else raw.resolve()
     if path != root and root not in path.parents:
         return None
     if not path.is_file():
@@ -203,13 +255,8 @@ async def verify_package(
         catalogue=req.catalogue,
     )
 
-    # Persist to database and in-memory cache
     inspection_data = inspection.model_dump(mode="json")
-    _inspections[inspection.inspection_id] = inspection_data
-    try:
-        db_save_inspection(inspection_data)
-    except Exception as e:
-        logger.error(f"DB save failed (fail-open): {e}")
+    persist_inspection(inspection_data)
 
     # Build response
     decision_str = inspection.outcome.decision.value if inspection.outcome else "pending"
@@ -269,11 +316,7 @@ async def verify_package_json(
     inspection = run_inspection(order=order, image_paths=image_paths, catalogue=catalogue)
 
     inspection_data = inspection.model_dump(mode="json")
-    _inspections[inspection.inspection_id] = inspection_data
-    try:
-        db_save_inspection(inspection_data)
-    except Exception as e:
-        logger.error(f"DB save failed (fail-open): {e}")
+    persist_inspection(inspection_data)
 
     decision_str = inspection.outcome.decision.value if inspection.outcome else "pending"
 
@@ -334,7 +377,9 @@ async def get_inspection_image(inspection_id: str, image_id: str, org_id: str = 
     Guessing another tenant's inspection id or image id returns 404.
     """
     data = _load_inspection_for_org(inspection_id, org_id)
-    path = resolve_inspection_image(data, image_id, get_settings().image_storage_path)
+    # Image paths are stored relative to STORAGE_ROOT (which contains /images/...).
+    storage_root, _ = _storage_roots()
+    path = resolve_inspection_image(data, image_id, storage_root)
     if path is None:
         raise HTTPException(status_code=404, detail="Image not found")
     media = _IMAGE_EXTENSIONS.get(path.suffix.lower(), "application/octet-stream")
@@ -450,8 +495,8 @@ async def get_evidence_by_unit(unit_id: str, org_id: str = Query(...)):
     Returns Manager and Recovery Manager use this to find what was packed.
     """
     # Search in DB
-    from app.storage.database import _get_connection, DB_PATH
-    conn = _get_connection(DB_PATH)
+    from app.storage.database import _get_connection, get_db_path
+    conn = _get_connection(get_db_path())
     try:
         row = conn.execute(
             "SELECT evidence_record FROM inspections WHERE unit_id = ? AND org_id = ? "

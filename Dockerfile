@@ -12,8 +12,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Create storage directory
+# Durable data dir (DB + photos). Mount a volume at /app/storage in production.
 RUN mkdir -p /app/storage/images
+ENV STORAGE_ROOT=/app/storage
+ENV DATABASE_PATH=/app/storage/pack_manager.db
+ENV IMAGE_STORAGE_PATH=/app/storage/images
 
 EXPOSE 8000
 

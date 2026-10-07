@@ -4,16 +4,24 @@ services:
     runtime: docker
     repo: https://github.com/Yogesh-101/cube26-pck-0122-yogesh-101
     branch: main
-    plan: free
+    plan: starter
+    disk:
+      name: pack-data
+      mountPath: /app/storage
+      sizeGB: 1
     envVars:
       - key: GEMINI_API_KEY
         sync: false
       - key: GEMINI_MODEL
-        value: gemini-2.5-flash
+        value: gemini-3.8-flash
       - key: APP_ENV
         value: production
       - key: LOG_LEVEL
         value: INFO
+      - key: STORAGE_ROOT
+        value: /app/storage
+      - key: DATABASE_PATH
+        value: /app/storage/pack_manager.db
       - key: IMAGE_STORAGE_PATH
         value: /app/storage/images
       - key: SECRET_KEY

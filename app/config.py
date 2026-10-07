@@ -26,8 +26,10 @@ class Settings(BaseModel):
     app_port: int = Field(default=8000)
     log_level: str = Field(default="INFO")
 
-    # Storage
-    database_url: str = Field(default="sqlite+aiosqlite:///./pack_manager.db")
+    # Storage — keep DB + images under one root so a single volume survives restarts
+    storage_root: str = Field(default="./storage")
+    database_path: str = Field(default="./storage/pack_manager.db")
+    database_url: str = Field(default="sqlite+aiosqlite:///./storage/pack_manager.db")
     image_storage_path: str = Field(default="./storage/images")
 
     # Security
@@ -60,8 +62,23 @@ def get_settings() -> Settings:
         app_host=os.getenv("APP_HOST", "0.0.0.0"),
         app_port=int(os.getenv("APP_PORT", "8000")),
         log_level=os.getenv("LOG_LEVEL", "INFO"),
-        database_url=os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./pack_manager.db"),
-        image_storage_path=os.getenv("IMAGE_STORAGE_PATH", "./storage/images"),
+        storage_root=os.getenv("STORAGE_ROOT", "./storage"),
+        database_path=os.getenv(
+            "DATABASE_PATH",
+            os.getenv("STORAGE_ROOT", "./storage").rstrip("/\\") + "/pack_manager.db",
+        ),
+        database_url=os.getenv(
+            "DATABASE_URL",
+            "sqlite+aiosqlite:///"
+            + os.getenv(
+                "DATABASE_PATH",
+                os.getenv("STORAGE_ROOT", "./storage").rstrip("/\\") + "/pack_manager.db",
+            ).replace("\\", "/"),
+        ),
+        image_storage_path=os.getenv(
+            "IMAGE_STORAGE_PATH",
+            os.getenv("STORAGE_ROOT", "./storage").rstrip("/\\") + "/images",
+        ),
         secret_key=os.getenv("SECRET_KEY", "change-me-in-production"),
         vlm_timeout_seconds=int(os.getenv("VLM_TIMEOUT_SECONDS", "60")),
         vlm_max_retries=int(os.getenv("VLM_MAX_RETRIES", "2")),

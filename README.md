@@ -283,7 +283,7 @@ Full methodology and results: [`docs/EVALUATION.md`](docs/EVALUATION.md)
 - **Incorrect items** are represented as a missing expected SKU plus an unexpected extra SKU. The engine does not emit a separate `wrong_item` discrepancy row. `no_wrong_items` passes unless that discrepancy type is present, which the current engine does not write.
 - **Photos are served only to the owning organisation.** New files are stored under `storage/images/<org_id>/<unit_id>/`. The results page loads them from `GET /api/v1/inspections/{inspection_id}/images/{image_id}?org_id=`. The lookup is org-scoped, the image id must be on that record, and the path must stay inside the storage root. The storage directory is not mounted as public static files. Uploads are JPG, PNG, WebP, or GIF, and must stay under `max_image_size_mb`.
 - **Counting.** Identical stacked items can be undercounted. That path is UNCERTAIN and human review, not a forced SEAL.
-- **Storage.** SQLite plus local files. Queries are scoped by `org_id` in SQL. This is not Postgres row-level security.
+- **Storage.** SQLite + photos under `STORAGE_ROOT` (default `./storage`). Paths are stored relative to that root so inspections survive refresh and process restart when the volume is kept. On Docker/Render, mount a persistent disk at `/app/storage`. Queries are scoped by `org_id` in SQL (not Postgres RLS).
 
 ### Known Failure Modes
 1. Identical products stacked/overlapping → undercount → UNCERTAIN

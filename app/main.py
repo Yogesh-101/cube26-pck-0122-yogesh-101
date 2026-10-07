@@ -34,9 +34,15 @@ TEMPLATE_DIR = Path(__file__).parent / "templates"
 TEMPLATE_DIR.mkdir(exist_ok=True)
 templates = Jinja2Templates(directory=str(TEMPLATE_DIR))
 
-# Ensure storage directories exist
+# Ensure durable storage (DB + images) exists before serving traffic
 settings = get_settings()
+Path(settings.storage_root).mkdir(parents=True, exist_ok=True)
 Path(settings.image_storage_path).mkdir(parents=True, exist_ok=True)
+Path(settings.database_path).expanduser().resolve().parent.mkdir(parents=True, exist_ok=True)
+
+from app.storage.database import init_database  # noqa: E402
+
+init_database()
 
 
 @app.get("/", response_class=HTMLResponse)

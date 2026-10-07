@@ -7,7 +7,14 @@ services:
       - "8000:8000"
     env_file:
       - .env
+    environment:
+      STORAGE_ROOT: /app/storage
+      DATABASE_PATH: /app/storage/pack_manager.db
+      IMAGE_STORAGE_PATH: /app/storage/images
     volumes:
-      - ./storage:/app/storage
-      - ./pack_manager.db:/app/pack_manager.db
+      # Single durable volume: SQLite DB + package photos survive restarts
+      - pack_data:/app/storage
     restart: unless-stopped
+
+volumes:
+  pack_data:
