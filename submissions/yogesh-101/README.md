@@ -8,16 +8,17 @@
 | Resource | Link |
 |---|---|
 | Repository | [github.com/Yogesh-101/cube26-pck-0122-yogesh-101](https://github.com/Yogesh-101/cube26-pck-0122-yogesh-101) |
-| Live Demo | _See deployment instructions in README.md_ |
+| Live Demo | _See deployment instructions in root README.md_ |
 | Eval Report | [eval-report.md](eval-report.md) |
 | Build Log | [build-log.md](build-log.md) |
 | Evidence Contract | [contract/](contract/) |
+| LinkedIn draft | [linkedin-post-draft.md](linkedin-post-draft.md) |
 
-## Expected layout
+## Layout
 
 ```
 submissions/yogesh-101/
-├── README.md            ← this file
+├── README.md
 ├── 01-customer-letter.md
 ├── 02-prfaq.md
 ├── 03-one-pager.md
@@ -25,10 +26,11 @@ submissions/yogesh-101/
 ├── build-brief.md
 ├── build-log.md
 ├── eval-report.md
-├── contract/
-│   └── evidence-record.json
-└── agent/               → root of this repo (app/, tests/, etc.)
+├── linkedin-post-draft.md
+└── contract/evidence-record.json
 ```
+
+Agent code lives at the repo root (`app/`, `tests/`, etc.).
 
 ## Status
 
@@ -44,3 +46,7 @@ submissions/yogesh-101/
 ## Kill condition
 
 If the agent produces a single false SEAL (approves a mis-shipped package) on the evaluation set, the product is not safe to ship.
+
+## Evaluation notes
+
+Order-blind VLM + held-out photo fixtures live under `data/eval/`. See [eval-report.md](eval-report.md).

@@ -319,16 +319,26 @@ def run_decision_engine(
 
     # -----------------------------------------------------------------------
     # CHECK 5: NO WRONG ITEMS
+    # A wrong item is a substitution: at least one expected SKU is absent and
+    # at least one unexpected SKU (or unidentified item) is present. Pure
+    # extras (expected all present + unexpected also present) stay on
+    # no_extra_items only. Pure missing stays on items_present only.
     # -----------------------------------------------------------------------
-    wrong_items_found = [
-        d for d in discrepancies if d.discrepancy_type == "wrong_item"
-    ]
-    if wrong_items_found:
+    substitution = bool(missing_skus) and (bool(extra_skus) or bool(unknown_items))
+    if substitution:
+        # Re-label the paired missing/extra discrepancies as wrong_item for
+        # the evidence trail (one substitution finding, not two unrelated ones).
+        for d in discrepancies:
+            if d.discrepancy_type in ("missing", "extra", "unknown_item"):
+                d.discrepancy_type = "wrong_item"
+                d.detail = f"Substitution: {d.detail}"
+        names = [sku for sku in missing_skus] + list(extra_skus)
+        names += [item.name for item in unknown_items]
         wrong_check = Check(
             check_key=CheckKey.NO_WRONG_ITEMS,
             verdict=Verdict.FAIL,
             confidence=0.9,
-            detail=f"Wrong items: {', '.join(d.product_name for d in wrong_items_found)}",
+            detail=f"Wrong / substituted items involving: {', '.join(names)}",
             model_version=model_version,
             latency_ms=latency_ms,
         )
@@ -337,7 +347,7 @@ def run_decision_engine(
             check_key=CheckKey.NO_WRONG_ITEMS,
             verdict=Verdict.PASS_,
             confidence=0.95,
-            detail="No wrong items detected",
+            detail="No wrong-item substitution detected",
             model_version=model_version,
             latency_ms=latency_ms,
         )

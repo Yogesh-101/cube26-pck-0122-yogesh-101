@@ -18,7 +18,7 @@ class Settings(BaseModel):
 
     # Gemini
     gemini_api_key: str = Field(default="")
-    gemini_model: str = Field(default="gemini-2.5-flash")
+    gemini_model: str = Field(default="gemini-3.8-flash")
 
     # App
     app_env: str = Field(default="development")
@@ -55,7 +55,7 @@ def get_settings() -> Settings:
 
     return Settings(
         gemini_api_key=os.getenv("GEMINI_API_KEY", ""),
-        gemini_model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+        gemini_model=os.getenv("GEMINI_MODEL", "gemini-3.8-flash"),
         app_env=os.getenv("APP_ENV", "development"),
         app_host=os.getenv("APP_HOST", "0.0.0.0"),
         app_port=int(os.getenv("APP_PORT", "8000")),
@@ -63,6 +63,7 @@ def get_settings() -> Settings:
         database_url=os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./pack_manager.db"),
         image_storage_path=os.getenv("IMAGE_STORAGE_PATH", "./storage/images"),
         secret_key=os.getenv("SECRET_KEY", "change-me-in-production"),
+        vlm_timeout_seconds=int(os.getenv("VLM_TIMEOUT_SECONDS", "60")),
         vlm_max_retries=int(os.getenv("VLM_MAX_RETRIES", "2")),
         vlm_retry_base_seconds=float(os.getenv("VLM_RETRY_BASE_SECONDS", "1.0")),
     )

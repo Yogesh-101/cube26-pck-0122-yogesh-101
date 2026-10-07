@@ -35,9 +35,9 @@
 ```
 Order JSON ──┐
              ├──▶ Input Validation ──▶ Prompt Packer ──▶ Gemini VLM ──┐
-Images ──────┘     (Pydantic)          (order+catalogue    (single     │
-  │                  │                  +images → prompt)    call)      │
-  │                  │                                                  │
+Images ──────┘     (Pydantic)          (catalogue+images    (single     │
+  │                  │                  → order-blind        call)      │
+  │                  │                   prompt; NO order)              │
   ▼                  │ reject FBA,                                      ▼
 Image Quality        │ bad data       ┌── Schema Validation ◄──────────┘
 Gate ────────────────┘                │   (parse structured JSON)
@@ -76,7 +76,8 @@ Gate ────────────────┘                │   (p
 - Flags issues as `is_uncertain` rather than rejecting — fail-open
 
 ### Gemini VLM Client (`app/vision/gemini_client.py`)
-- **One batched call per unit** (Engineering Rule 2). The payload is built once: prompt, order lines, catalogue, and every usable photo.
+- **Order-blind observation**: the prompt receives package photos + catalogue for SKU grounding only. The expected order is never sent to the model (closes re-score gap: "order in prompt").
+- **One batched call per unit** (Engineering Rule 2). The payload is built once: prompt, catalogue, and every usable photo.
 - Transient Gemini failures (HTTP 503, 429, 500, 504, timeouts, connection errors) are retried with bounded exponential backoff. `VLM_MAX_RETRIES` and `VLM_RETRY_BASE_SECONDS` come from settings. A 400 or 401 is not retried.
 - A success returns immediately, so a retry is a repeat of that same single call, not one call per check.
 - The model id sent to Gemini is `Settings.gemini_model`, default `gemini-2.5-flash` (`GEMINI_MODEL`).
@@ -87,6 +88,7 @@ Gate ────────────────┘                │   (p
 ### Decision Engine (`app/decision/engine.py`)
 - **Deterministic** — no AI in the decision path
 - 5 named checks: `items_present`, `quantity_match`, `no_extra_items`, `no_wrong_items`, `image_quality`
+- `no_wrong_items` FAILs on substitution (expected SKU missing **and** unexpected SKU/unknown present)
 - Each check: `PASS` / `FAIL` / `UNCERTAIN`
 - Final logic:
   - All PASS → `SEAL`

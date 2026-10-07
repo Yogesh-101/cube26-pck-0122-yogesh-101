@@ -114,7 +114,6 @@ def make_verifier(side_effects, max_retries=2):
 def run(verifier, image_path, timeout_seconds=60):
     return verifier.verify_package(
         image_paths=[image_path],
-        order_lines=[OrderLine(sku="SKU-BOTTLE-750", quantity=1)],
         catalogue=[CatalogueProduct(sku="SKU-BOTTLE-750", name="Water Bottle 750ml")],
         timeout_seconds=timeout_seconds,
     )
@@ -298,3 +297,10 @@ class TestRetrySettings:
         verifier = GeminiPackVerifier(api_key="test-key-not-used")
         assert verifier.max_retries == settings.vlm_max_retries
         assert verifier.retry_base_seconds == settings.vlm_retry_base_seconds
+
+
+def test_suggested_retry_seconds_parses_retry_info():
+    from app.vision.gemini_client import _suggested_retry_seconds
+
+    err = Exception("Please retry in 54.04s. {'retryDelay': '54s'}")
+    assert _suggested_retry_seconds(err) == 54.0

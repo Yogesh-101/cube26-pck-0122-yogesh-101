@@ -77,3 +77,14 @@
 3. Cohen's kappa with two independent labelers
 4. Per-SKU accuracy breakdown on long-tail products
 5. Integration test with Returns Manager evidence consumer
+
+### Post Round-2 re-score remediation — Oct 6, 2026
+
+Independent re-score dropped Pack 09 from 90 to 61 for: **rules-only 100% eval, no photos; order in prompt**.
+
+- Made VLM **order-blind** (catalogue + images only; expected order never in prompt)
+- Added held-out photo dataset (38 fixtures from real product photos) under `data/eval/held_out/`
+- Added `scripts/build_eval_photos.py` and `scripts/run_photo_eval.py` (re-scorable, resumable)
+- Fixed `no_wrong_items` substitution detection
+- Split eval reporting: rules harness vs photo headline; honest free-tier quota pending documented
+- 102 unit/evaluation tests passing

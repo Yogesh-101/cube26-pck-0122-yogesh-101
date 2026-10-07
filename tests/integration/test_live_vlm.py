@@ -138,7 +138,6 @@ class TestLiveVLM:
 
         result = verifier.verify_package(
             image_paths=[img_path],
-            order_lines=[OrderLine(sku="SKU-BOTTLE-750", quantity=1)],
             catalogue=[
                 CatalogueProduct(
                     sku="SKU-BOTTLE-750",
@@ -174,6 +173,5 @@ class TestLiveVLM:
         with pytest.raises(VLMError):
             verifier.verify_package(
                 image_paths=[img_path],
-                order_lines=[OrderLine(sku="SKU-TEST", quantity=1)],
                 catalogue=[],
             )

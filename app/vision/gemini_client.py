@@ -158,6 +158,19 @@ def _is_retryable_error(exc: BaseException) -> bool:
     return isinstance(exc, _NETWORK_ERRORS)
 
 
+def _suggested_retry_seconds(exc: BaseException) -> float | None:
+    """Parse RetryInfo.retryDelay from Gemini error payloads when present."""
+    text = str(exc)
+    # 'retryDelay': '54s' or "Please retry in 54.04s"
+    match = re.search(r"retryDelay['\"]?\s*[:=]\s*['\"]?(\d+(?:\.\d+)?)s?", text, re.I)
+    if match:
+        return float(match.group(1))
+    match = re.search(r"Please retry in (\d+(?:\.\d+)?)s", text, re.I)
+    if match:
+        return float(match.group(1))
+    return None
+
+
 def _failure_message(exc: BaseException, attempts: int, note: str = "") -> str:
     """Operator-visible reason — this text is persisted on pending records."""
     message = f"Gemini API error: {exc}"
@@ -231,33 +244,29 @@ VLM_RESPONSE_SCHEMA = {
 
 
 def _build_prompt(
-    order_lines: list[OrderLine],
     catalogue: list[CatalogueProduct],
 ) -> str:
-    """Build the system+user prompt for the VLM call."""
+    """
+    Build an order-blind observation prompt for the VLM call.
 
-    # Format expected order
-    order_text = "\n".join(
-        f"  - SKU: {line.sku}, Quantity: {line.quantity}"
-        for line in order_lines
-    )
+    The expected order is intentionally omitted. Passing expected SKUs/quantities
+    into the vision prompt anchors the model toward reporting what should be
+    present rather than what is visible. The deterministic decision engine
+    compares observations to the order after this call returns.
+    """
 
-    # Format catalogue for grounding
     catalogue_text = "\n".join(
         f"  - SKU: {p.sku} | Name: {p.name}"
         + (f" | Variant: {p.variant}" if p.variant else "")
         + (f" | Description: {p.description}" if p.description else "")
         for p in catalogue
-    ) if catalogue else "  No catalogue provided — identify products by visual appearance."
+    ) if catalogue else "  No catalogue provided — identify products by visual appearance only."
 
-    return f"""You are a Pack Manager verification agent. You are examining photographs of an open package before it is sealed for shipping.
+    return f"""You are a Pack Manager observation agent. You are examining photographs of an open package before it is sealed for shipping.
 
-TASK: Identify every item visible in the open package and count quantities. Match items to the product catalogue provided.
+TASK: Identify every distinct physical item visible in the open package and count quantities. Match items to the product catalogue when reliable. Do not infer what the order was supposed to contain.
 
-EXPECTED ORDER:
-{order_text}
-
-PRODUCT CATALOGUE:
+PRODUCT CATALOGUE (for SKU grounding only — not a packing list):
 {catalogue_text}
 
 RULES:
@@ -269,6 +278,7 @@ RULES:
 6. Use confidence below 0.5 when identification is genuinely uncertain.
 7. If image quality prevents reliable verification, mark is_sufficient as false.
 8. Do NOT assume hidden items exist — report only what is visible.
+9. Do NOT use any prior knowledge of an order. There is no expected packing list in this prompt. Report presence and count only.
 
 Examine the provided images and return your structured analysis."""
 
@@ -330,10 +340,16 @@ class GeminiPackVerifier:
         self._client = None
 
     def _get_client(self):
-        """Lazy-init the Gemini client."""
+        """Lazy-init the Gemini client with a hard HTTP timeout."""
         if self._client is None:
             from google import genai
-            self._client = genai.Client(api_key=self.api_key)
+            # Prevent indefinite hangs on overloaded models (esp. gemini-3.8-flash).
+            settings = get_settings()
+            timeout_ms = max(10_000, int(settings.vlm_timeout_seconds * 1000))
+            self._client = genai.Client(
+                api_key=self.api_key,
+                http_options={"timeout": timeout_ms},
+            )
         return self._client
 
     def _generate_with_retry(
@@ -374,6 +390,19 @@ class GeminiPackVerifier:
 
                 backoff = self.retry_base_seconds * (2 ** (attempts - 1))
                 backoff += random.uniform(0.0, self.retry_base_seconds * 0.25)
+                suggested = _suggested_retry_seconds(e)
+                if suggested is not None:
+                    # Daily free-tier exhaustion returns multi-hour delays.
+                    # Do not burn the per-call budget spinning on that.
+                    if suggested > budget_seconds:
+                        raise VLMError(
+                            _failure_message(
+                                e, attempts,
+                                note="upstream retry delay exceeds call budget (likely daily quota)",
+                            ),
+                            latency_ms=elapsed * 1000,
+                        ) from e
+                    backoff = max(backoff, min(suggested, 90.0))
 
                 if backoff >= budget_seconds - elapsed:
                     raise VLMError(
@@ -393,17 +422,18 @@ class GeminiPackVerifier:
     def verify_package(
         self,
         image_paths: list[str],
-        order_lines: list[OrderLine],
         catalogue: list[CatalogueProduct],
+        order_lines: list[OrderLine] | None = None,
         timeout_seconds: int = 60,
     ) -> VerificationResult:
         """
-        Single batched VLM call for pack verification.
+        Single batched VLM call for pack observation (order-blind).
 
         Args:
             image_paths: Paths to package photographs.
-            order_lines: Expected order lines.
-            catalogue: Product catalogue for grounding.
+            catalogue: Product catalogue for SKU grounding only.
+            order_lines: Unused by the prompt. Accepted for backward
+                compatibility with earlier call sites; never sent to the model.
             timeout_seconds: Max wait time for the model response, and the
                 total budget shared by any retries of a transient failure.
 
@@ -413,13 +443,15 @@ class GeminiPackVerifier:
         Raises:
             VLMError: On any failure (caller implements fail-open).
         """
+        # order_lines is intentionally unused: observations stay order-blind.
+        _ = order_lines
         start_time = time.time()
 
         try:
             client = self._get_client()
 
-            # Build prompt
-            prompt_text = _build_prompt(order_lines, catalogue)
+            # Build order-blind prompt (catalogue only — no expected order)
+            prompt_text = _build_prompt(catalogue)
 
             # Build content parts: text prompt + all images
             from google.genai import types

@@ -108,6 +108,7 @@ def build_eval_dataset() -> list[EvalCase]:
             expected_checks={
                 CheckKey.ITEMS_PRESENT.value: Verdict.FAIL,
                 CheckKey.NO_EXTRA_ITEMS.value: Verdict.FAIL,
+                CheckKey.NO_WRONG_ITEMS.value: Verdict.FAIL,
             },
         ))
 

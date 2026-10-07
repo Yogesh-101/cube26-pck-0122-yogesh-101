@@ -1,0 +1,406 @@
+{
+  "labeller_id": "labeller_b",
+  "role": "independent_second_pass",
+  "labels": {
+    "HO-CORRECT-01": {
+      "observed": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1,
+          "name": "Water Bottle 750ml"
+        }
+      ],
+      "decision": "seal"
+    },
+    "HO-CORRECT-02": {
+      "observed": [
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 1,
+          "name": "USB-C Charging Cable"
+        }
+      ],
+      "decision": "seal"
+    },
+    "HO-CORRECT-03": {
+      "observed": [
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 1,
+          "name": "Scented Candle"
+        }
+      ],
+      "decision": "seal"
+    },
+    "HO-CORRECT-04": {
+      "observed": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 1,
+          "name": "Ceramic Mug 11oz"
+        }
+      ],
+      "decision": "seal"
+    },
+    "HO-CORRECT-05": {
+      "observed": [
+        {
+          "sku": "SKU-TOWEL-BLU",
+          "quantity": 1,
+          "name": "Blue Bath Towel"
+        }
+      ],
+      "decision": "seal"
+    },
+    "HO-CORRECT-06": {
+      "observed": [
+        {
+          "sku": "SKU-LAMP-LED",
+          "quantity": 1,
+          "name": "LED Desk Lamp"
+        }
+      ],
+      "decision": "seal"
+    },
+    "HO-CORRECT-07": {
+      "observed": [
+        {
+          "sku": "SKU-LEASH-6FT",
+          "quantity": 1,
+          "name": "Dog Leash 6ft"
+        }
+      ],
+      "decision": "seal"
+    },
+    "HO-CORRECT-08": {
+      "observed": [
+        {
+          "sku": "SKU-PUZZLE-500",
+          "quantity": 1,
+          "name": "500-Piece Puzzle"
+        }
+      ],
+      "decision": "seal"
+    },
+    "HO-CORRECT-09": {
+      "observed": [
+        {
+          "sku": "SKU-SERUM-30",
+          "quantity": 1,
+          "name": "Face Serum 30ml"
+        }
+      ],
+      "decision": "seal"
+    },
+    "HO-CORRECT-10": {
+      "observed": [
+        {
+          "sku": "SKU-PROT-1KG",
+          "quantity": 1,
+          "name": "Protein Powder 1kg"
+        }
+      ],
+      "decision": "seal"
+    },
+    "HO-MISSING-01": {
+      "observed": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1,
+          "name": "Water Bottle 750ml"
+        }
+      ],
+      "decision": "stop_and_fix"
+    },
+    "HO-MISSING-02": {
+      "observed": [
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 1,
+          "name": "Scented Candle"
+        }
+      ],
+      "decision": "stop_and_fix"
+    },
+    "HO-MISSING-03": {
+      "observed": [
+        {
+          "sku": "SKU-TOWEL-BLU",
+          "quantity": 1,
+          "name": "Blue Bath Towel"
+        }
+      ],
+      "decision": "stop_and_fix"
+    },
+    "HO-MISSING-04": {
+      "observed": [
+        {
+          "sku": "SKU-SERUM-30",
+          "quantity": 1,
+          "name": "Face Serum 30ml"
+        }
+      ],
+      "decision": "stop_and_fix"
+    },
+    "HO-WRONG-01": {
+      "observed": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1,
+          "name": "Water Bottle 750ml"
+        }
+      ],
+      "decision": "stop_and_fix"
+    },
+    "HO-WRONG-02": {
+      "observed": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 1,
+          "name": "Ceramic Mug 11oz"
+        }
+      ],
+      "decision": "stop_and_fix"
+    },
+    "HO-WRONG-03": {
+      "observed": [
+        {
+          "sku": "SKU-TOWEL-BLU",
+          "quantity": 1,
+          "name": "Blue Bath Towel"
+        }
+      ],
+      "decision": "stop_and_fix"
+    },
+    "HO-WRONG-04": {
+      "observed": [
+        {
+          "sku": "SKU-SERUM-30",
+          "quantity": 1,
+          "name": "Face Serum 30ml"
+        }
+      ],
+      "decision": "stop_and_fix"
+    },
+    "HO-EXTRA-01": {
+      "observed": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1,
+          "name": "Water Bottle 750ml"
+        },
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 1,
+          "name": "USB-C Charging Cable"
+        }
+      ],
+      "decision": "stop_and_fix"
+    },
+    "HO-EXTRA-02": {
+      "observed": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 1,
+          "name": "Ceramic Mug 11oz"
+        },
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 1,
+          "name": "Scented Candle"
+        }
+      ],
+      "decision": "stop_and_fix"
+    },
+    "HO-EXTRA-03": {
+      "observed": [
+        {
+          "sku": "SKU-TOWEL-BLU",
+          "quantity": 1,
+          "name": "Blue Bath Towel"
+        },
+        {
+          "sku": "SKU-LEASH-6FT",
+          "quantity": 1,
+          "name": "Dog Leash 6ft"
+        }
+      ],
+      "decision": "stop_and_fix"
+    },
+    "HO-EXTRA-04": {
+      "observed": [
+        {
+          "sku": "SKU-PUZZLE-500",
+          "quantity": 1,
+          "name": "500-Piece Puzzle"
+        },
+        {
+          "sku": "SKU-SERUM-30",
+          "quantity": 1,
+          "name": "Face Serum 30ml"
+        }
+      ],
+      "decision": "stop_and_fix"
+    },
+    "HO-QTY-01": {
+      "observed": [
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 1,
+          "name": "USB-C Charging Cable"
+        }
+      ],
+      "decision": "stop_and_fix"
+    },
+    "HO-QTY-02": {
+      "observed": [
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 1,
+          "name": "Scented Candle"
+        }
+      ],
+      "decision": "stop_and_fix"
+    },
+    "HO-QTY-03": {
+      "observed": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 1,
+          "name": "Ceramic Mug 11oz"
+        }
+      ],
+      "decision": "stop_and_fix"
+    },
+    "HO-QTY-04": {
+      "observed": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1,
+          "name": "Water Bottle 750ml"
+        }
+      ],
+      "decision": "stop_and_fix"
+    },
+    "HO-MULTI-01": {
+      "observed": [
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 2,
+          "name": "USB-C Charging Cable"
+        }
+      ],
+      "decision": "seal"
+    },
+    "HO-MULTI-02": {
+      "observed": [
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 2,
+          "name": "Scented Candle"
+        }
+      ],
+      "decision": "seal"
+    },
+    "HO-MULTI-03": {
+      "observed": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 2,
+          "name": "Ceramic Mug 11oz"
+        }
+      ],
+      "decision": "seal"
+    },
+    "HO-MULTI-04": {
+      "observed": [
+        {
+          "sku": "SKU-SERUM-30",
+          "quantity": 2,
+          "name": "Face Serum 30ml"
+        }
+      ],
+      "decision": "seal"
+    },
+    "HO-SIMILAR-01": {
+      "observed": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1,
+          "name": "Water Bottle 750ml"
+        }
+      ],
+      "decision": "stop_and_fix"
+    },
+    "HO-SIMILAR-02": {
+      "observed": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 1,
+          "name": "Ceramic Mug 11oz"
+        }
+      ],
+      "decision": "stop_and_fix"
+    },
+    "HO-SIMILAR-03": {
+      "observed": [
+        {
+          "sku": "SKU-PROT-1KG",
+          "quantity": 1,
+          "name": "Protein Powder 1kg"
+        }
+      ],
+      "decision": "stop_and_fix"
+    },
+    "HO-SIMILAR-04": {
+      "observed": [
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 1,
+          "name": "USB-C Charging Cable"
+        }
+      ],
+      "decision": "stop_and_fix"
+    },
+    "HO-AMBIG-01": {
+      "observed": [
+        {
+          "sku": null,
+          "quantity": 1,
+          "name": "unreadable_under_blur"
+        }
+      ],
+      "decision": "stop_and_fix"
+    },
+    "HO-AMBIG-02": {
+      "observed": [
+        {
+          "sku": null,
+          "quantity": 1,
+          "name": "unreadable_under_blur"
+        }
+      ],
+      "decision": "stop_and_fix"
+    },
+    "HO-AMBIG-03": {
+      "observed": [
+        {
+          "sku": null,
+          "quantity": 1,
+          "name": "unreadable_under_blur"
+        }
+      ],
+      "decision": "stop_and_fix"
+    },
+    "HO-AMBIG-04": {
+      "observed": [
+        {
+          "sku": null,
+          "quantity": 1,
+          "name": "unreadable_under_blur"
+        }
+      ],
+      "decision": "stop_and_fix"
+    }
+  }
+}

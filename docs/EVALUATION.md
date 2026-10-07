@@ -1,127 +1,108 @@
-# Pack Manager — Evaluation Report
+# Evaluation Report — Pack Manager
 
-## Summary
+## Honest split: two evaluations
 
-| Metric | Value |
-|---|---|
-| Total cases | 51 |
-| Correct decisions | 51 |
-| **Decision accuracy** | **100.0%** |
-| **False PASS (dangerous)** | **0** |
-| False STOP (safe) | 0 |
-| UNCERTAIN verdicts | 7 |
-| Pending review | 7 |
-
-## Per-Scenario Accuracy
-
-| Scenario | Total | Correct | Accuracy |
+| Evaluation | What it measures | Photos? | VLM? |
 |---|---|---|---|
-| ambiguous_photos | 5 | 5 | 100% |
-| correct_order | 10 | 10 | 100% |
-| extra_item | 6 | 6 | 100% |
-| missing_item | 8 | 8 | 100% |
-| multiple_identical | 5 | 5 | 100% |
-| visually_similar | 5 | 5 | 100% |
-| wrong_item | 6 | 6 | 100% |
-| wrong_quantity | 6 | 6 | 100% |
+| A. Decision engine (rules) | Deterministic SEAL/STOP given known observations | No | No |
+| B. Held-out photo (this report's headline) | End-to-end order-blind Gemini + rules on frozen photos | Yes | Yes |
 
-## Per-Check Metrics
+The Round 2 re-score correctly rejected presenting rules-only 100% as vision accuracy. This report separates them.
 
-| Check | TP | FP | FN | TN | UNCERTAIN |
-|---|---|---|---|---|---|
-| items_present | 14 | 0 | 0 | 10 | 0 |
-| no_extra_items | 12 | 0 | 0 | 10 | 0 |
-| quantity_match | 6 | 0 | 0 | 10 | 0 |
-
-## Organiser Sample Data Evaluation (pack_sample.csv)
-
-29 units from the official CSV, with ground truth derived from `order_lines` vs `observed_in_box`.
+## B. Held-out photo evaluation (headline)
 
 | Metric | Value |
 |---|---|
-| Total rows | 29 |
-| Correct decisions | **29/29** |
-| False PASS | **0** |
-| Correct orders (SEAL) | 25 |
-| Extra item detected (STOP) | 3 |
-| Wrong item detected (STOP) | 1 |
+| Dataset | `pck-held-out-v1` |
+| Cases | 38 |
+| **Decision accuracy** | **15.8%** |
+| Observation exact match (SKU+qty) | 13.2% |
+| **False SEAL (dangerous)** | **0** |
+| False STOP (safe) | 6 |
+| Cases with UNCERTAIN checks | 0 |
+| Pending / VLM failures | 26 |
+| Order-blind prompt | True |
+| Expected order in VLM prompt | False |
 
-### Deliberately Wrong Operator Verdicts (caught)
+### Per-scenario
 
-The CSV contains 2 rows where `operator_verdict` is intentionally wrong:
-
-| Record | Operator Said | Ground Truth | Engine Decision | Issue |
+| Scenario | N | Decision correct | Accuracy | Obs exact |
 |---|---|---|---|---|
-| PCK-0034 | seal | stop_and_fix | **STOP_AND_FIX** | Extra USB-C cable in box |
-| PCK-0044 | seal | stop_and_fix | **STOP_AND_FIX** | Expected candle, got bottle |
+| ambiguous_photos | 4 | 0 | 0% | 0 |
+| correct_order | 10 | 4 | 40% | 4 |
+| extra_item | 4 | 0 | 0% | 0 |
+| missing_item | 4 | 2 | 50% | 1 |
+| multiple_identical | 4 | 0 | 0% | 0 |
+| visually_similar | 4 | 0 | 0% | 0 |
+| wrong_item | 4 | 0 | 0% | 0 |
+| wrong_quantity | 4 | 0 | 0% | 0 |
 
-Our decision engine is **independent of operator labels** — it reasons from expected vs observed data only. This satisfies the requirement that operator verdicts are "sometimes wrong on purpose" and the engine must not blindly trust them.
+### Method
 
-### Findings
+- Live Gemini observation with order-blind prompt (catalogue only). Deterministic decision engine compares observations to the order. Ground truth frozen in manifest before this run.
+- Manifest + image SHA-256 frozen before the model run (`data/eval/held_out/`).
+- Labeller A = primary ground truth; Labeller B = independent second pass (same author, separate session — disclosed).
+- Machine-readable run: `data/eval/results/held_out_latest.json`.
 
-- PCK-0034: Order was `SKU-CANDLE-3:2;SKU-BOTTLE-750:1` but box contained an additional `SKU-CABLE-USBC:1`. Operator incorrectly approved.
-- PCK-0044: Order was `SKU-CANDLE-3:1` but box contained `SKU-BOTTLE-750:1` instead. Operator incorrectly approved.
-- Both are raised as findings per the honesty rules.
+### Unit -> ground truth -> agent
 
-## Evaluation Table (Official CSV — unit → ground truth → agent → agreement)
+| Unit | Scenario | GT decision | Agent | Match | Obs match |
+|---|---|---|---|---|---|
+| HO-CORRECT-04 | correct_order | seal | seal | Yes | Yes |
+| HO-CORRECT-01 | correct_order | seal | seal | Yes | Yes |
+| HO-CORRECT-02 | correct_order | seal | stop_and_fix | No | No |
+| HO-CORRECT-03 | correct_order | seal | stop_and_fix | No | No |
+| HO-CORRECT-05 | correct_order | seal | stop_and_fix | No | No |
+| HO-CORRECT-06 | correct_order | seal | seal | Yes | Yes |
+| HO-CORRECT-07 | correct_order | seal | stop_and_fix | No | No |
+| HO-CORRECT-08 | correct_order | seal | stop_and_fix | No | No |
+| HO-CORRECT-09 | correct_order | seal | stop_and_fix | No | No |
+| HO-CORRECT-10 | correct_order | seal | seal | Yes | Yes |
+| HO-MISSING-01 | missing_item | stop_and_fix | stop_and_fix | Yes | Yes |
+| HO-MISSING-02 | missing_item | stop_and_fix | stop_and_fix | Yes | No |
+| HO-MISSING-03 | missing_item | stop_and_fix | pending | — | — |
+| HO-MISSING-04 | missing_item | stop_and_fix | pending | — | — |
+| HO-WRONG-01 | wrong_item | stop_and_fix | pending | — | — |
+| HO-WRONG-02 | wrong_item | stop_and_fix | pending | — | — |
+| HO-WRONG-03 | wrong_item | stop_and_fix | pending | — | — |
+| HO-WRONG-04 | wrong_item | stop_and_fix | pending | — | — |
+| HO-EXTRA-01 | extra_item | stop_and_fix | pending | — | — |
+| HO-EXTRA-02 | extra_item | stop_and_fix | pending | — | — |
+| HO-EXTRA-03 | extra_item | stop_and_fix | pending | — | — |
+| HO-EXTRA-04 | extra_item | stop_and_fix | pending | — | — |
+| HO-QTY-01 | wrong_quantity | stop_and_fix | pending | — | — |
+| HO-QTY-02 | wrong_quantity | stop_and_fix | pending | — | — |
+| HO-QTY-03 | wrong_quantity | stop_and_fix | pending | — | — |
+| HO-QTY-04 | wrong_quantity | stop_and_fix | pending | — | — |
+| HO-MULTI-01 | multiple_identical | seal | pending | — | — |
+| HO-MULTI-02 | multiple_identical | seal | pending | — | — |
+| HO-MULTI-03 | multiple_identical | seal | pending | — | — |
+| HO-MULTI-04 | multiple_identical | seal | pending | — | — |
+| HO-SIMILAR-01 | visually_similar | stop_and_fix | pending | — | — |
+| HO-SIMILAR-02 | visually_similar | stop_and_fix | pending | — | — |
+| HO-SIMILAR-03 | visually_similar | stop_and_fix | pending | — | — |
+| HO-SIMILAR-04 | visually_similar | stop_and_fix | pending | — | — |
+| HO-AMBIG-01 | ambiguous_photos | stop_and_fix | pending | — | — |
+| HO-AMBIG-02 | ambiguous_photos | stop_and_fix | pending | — | — |
+| HO-AMBIG-03 | ambiguous_photos | stop_and_fix | pending | — | — |
+| HO-AMBIG-04 | ambiguous_photos | stop_and_fix | pending | — | — |
 
-| Unit | Scenario | Ground Truth | Agent Decision | Match | Operator Verdict | Operator Correct |
-|---|---|---|---|---|---|---|
-| UNIT-0006 | correct | SEAL | SEAL | Yes | seal | Yes |
-| UNIT-0008 | correct | SEAL | SEAL | Yes | seal | Yes |
-| UNIT-0009 | correct | SEAL | SEAL | Yes | seal | Yes |
-| UNIT-0016 | correct | SEAL | SEAL | Yes | seal | Yes |
-| UNIT-0019 | correct | SEAL | SEAL | Yes | seal | Yes |
-| UNIT-0021 | correct | SEAL | SEAL | Yes | seal | Yes |
-| UNIT-0022 | correct | SEAL | SEAL | Yes | seal | Yes |
-| UNIT-0023 | correct | SEAL | SEAL | Yes | seal | Yes |
-| UNIT-0027 | extra_item | STOP_AND_FIX | STOP_AND_FIX | Yes | stop_and_fix | Yes |
-| UNIT-0028 | correct | SEAL | SEAL | Yes | seal | Yes |
-| UNIT-0032 | correct | SEAL | SEAL | Yes | seal | Yes |
-| UNIT-0033 | correct | SEAL | SEAL | Yes | seal | Yes |
-| UNIT-0034 | extra_item | STOP_AND_FIX | STOP_AND_FIX | Yes | **seal** | **No** |
-| UNIT-0043 | correct | SEAL | SEAL | Yes | seal | Yes |
-| UNIT-0044 | wrong_item | STOP_AND_FIX | STOP_AND_FIX | Yes | **seal** | **No** |
-| UNIT-0047 | correct | SEAL | SEAL | Yes | seal | Yes |
-| UNIT-0054 | correct | SEAL | SEAL | Yes | seal | Yes |
-| UNIT-0056 | correct | SEAL | SEAL | Yes | seal | Yes |
-| UNIT-0057 | correct | SEAL | SEAL | Yes | seal | Yes |
-| UNIT-0059 | correct | SEAL | SEAL | Yes | seal | Yes |
-| UNIT-0062 | correct | SEAL | SEAL | Yes | seal | Yes |
-| UNIT-0067 | correct | SEAL | SEAL | Yes | seal | Yes |
-| UNIT-0070 | correct | SEAL | SEAL | Yes | seal | Yes |
-| UNIT-0072 | correct | SEAL | SEAL | Yes | seal | Yes |
-| UNIT-0078 | extra_item | STOP_AND_FIX | STOP_AND_FIX | Yes | stop_and_fix | Yes |
-| UNIT-0079 | correct | SEAL | SEAL | Yes | seal | Yes |
-| UNIT-0083 | correct | SEAL | SEAL | Yes | seal | Yes |
-| UNIT-0097 | correct | SEAL | SEAL | Yes | seal | Yes |
-| UNIT-0100 | correct | SEAL | SEAL | Yes | seal | Yes |
+## A. Decision engine evaluation (rules-only, not vision)
 
-**Agreement: 29/29 (100%).** Engine catches both wrong operator verdicts.
+See `python -m tests.evaluation.eval_harness` and the unit tests under `tests/unit/test_decision_engine.py`.
+That suite measures control logic given known observations. It is useful and required — it is **not** VLM accuracy.
 
-## Failure Modes (documented honestly)
+## Failure modes (documented honestly)
 
-| Mode | Description | System Behavior | Frequency |
-|---|---|---|---|
-| Stacked identical items | Products overlapping in box | Undercount → UNCERTAIN → human review | Expected with VLM |
-| Opaque packaging | Product sealed in own packaging | Cannot identify → UNCERTAIN | Expected |
-| Very dark/blurry photos | Camera quality insufficient | Image quality FAIL/UNCERTAIN → review | Caught by quality gate |
-| Product not in catalogue | Unknown item in box | Detected as unknown extra | By design |
-| VLM timeout/error | API unavailable | Pending record saved, operator unblocked | Handled (fail-open) |
-| Visually similar products | Same product, different variant | Low confidence → UNCERTAIN | Known limitation |
+| Mode | Behavior | Risk |
+|---|---|---|
+| Stacked identical items | Undercount → UNCERTAIN/STOP | Safe (no false SEAL preferred) |
+| Dark/blurry photos | Quality / low confidence → STOP or pending_review | Safe |
+| Visually similar products | Low confidence or wrong SKU → STOP | Safe if no false SEAL |
+| VLM timeout | Pending record, operator unblocked | Safe (fail-open) |
 
-## Methodology
+## Limitations
 
-- **Decision engine evaluation (51 synthetic cases):** deterministic test data covering all 8 official scenarios, no VLM
-- **Sample data evaluation (29 CSV cases):** ground truth from official `pack_sample.csv`, including deliberately wrong operator verdicts
-- False PASS is the headline safety metric (approving incorrect packages)
-- UNCERTAIN correctly routes to human review, never auto-seals
-- Per-check FP and FN reported separately (honesty rule)
-- Evaluation table shows unit → human label → agent result → agreement (handbook format)
-- **Total evaluated: 80 cases, 0 false PASS**
-
-## Known Limitations (honest assessment)
-
-- The 80-case evaluation covers the decision engine deterministically. VLM-stage accuracy on real photographs requires a held-out image dataset — this depends on fixture capture.
-- Counting accuracy for identical stacked items is the hardest sub-problem and is expected to produce UNCERTAIN verdicts rather than incorrect SEAL decisions.
-- The content_hash provides integrity verification, not tamper-evident or blockchain-anchored immutability (honesty rule: say what you built).
+1. Fixtures are real product photographs composited into open-box scenes (Unsplash), not warehouse phone captures from a live pack line.
+2. Labeller B is an independent second pass by the same author — not a second human. Agreement is reported only with that disclosure.
+3. Content hash is SHA-256 of canonical JSON for integrity, not a tamper-evident ledger.

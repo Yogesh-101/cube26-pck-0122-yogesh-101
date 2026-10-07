@@ -12,3 +12,7 @@ storage/images/*
 !storage/images/.gitkeep
 .pytest_cache/
 .cursor/
+
+# Eval run logs
+data/eval/results/*.log
+

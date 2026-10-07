@@ -86,9 +86,10 @@ def run_inspection(
             api_key=settings.gemini_api_key,
             model=settings.gemini_model,
         )
+        # Order lines are not passed into the VLM prompt (order-blind).
+        # The decision engine compares observations to the order below.
         vlm_result = verifier.verify_package(
             image_paths=usable_paths,
-            order_lines=order.lines,
             catalogue=catalogue,
             timeout_seconds=settings.vlm_timeout_seconds,
         )

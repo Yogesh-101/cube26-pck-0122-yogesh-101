@@ -1,0 +1,919 @@
+{
+  "dataset_id": "pck-held-out-v1",
+  "created_for": "CUBE Buildathon 2026 Round 2 re-score gaps",
+  "description": "Held-out open-package photo set. Product photographs sourced from Unsplash and composited into cardboard box scenes. Ground truth was frozen in this manifest before any Gemini run.",
+  "labelling_policy": "Labeller A wrote the primary ground truth at fixture build time. Labeller B is an independent second pass on the same images (same author, separate review session) \u2014 disclosed, not pretended to be a second person.",
+  "n_cases": 38,
+  "cases": [
+    {
+      "case_id": "HO-CORRECT-01",
+      "scenario": "correct_order",
+      "expected_lines": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1,
+          "name": "Water Bottle 750ml"
+        }
+      ],
+      "expected_decision": "seal",
+      "image": "images/HO-CORRECT-01.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "8c904c7c378e4beaeed2c30218e5eb13507bc6914dac87c75344fe65b91248b1"
+    },
+    {
+      "case_id": "HO-CORRECT-02",
+      "scenario": "correct_order",
+      "expected_lines": [
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 1,
+          "name": "USB-C Charging Cable"
+        }
+      ],
+      "expected_decision": "seal",
+      "image": "images/HO-CORRECT-02.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "a76436736b6e154aaaa0ac82cb93ba01890fc75a4e7a3b75011f4ad12ab49f35"
+    },
+    {
+      "case_id": "HO-CORRECT-03",
+      "scenario": "correct_order",
+      "expected_lines": [
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 1,
+          "name": "Scented Candle"
+        }
+      ],
+      "expected_decision": "seal",
+      "image": "images/HO-CORRECT-03.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "1b63971d630217fe77035fea2faecebbadb9f05f459ee1e25fd0452cc5879509"
+    },
+    {
+      "case_id": "HO-CORRECT-04",
+      "scenario": "correct_order",
+      "expected_lines": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 1,
+          "name": "Ceramic Mug 11oz"
+        }
+      ],
+      "expected_decision": "seal",
+      "image": "images/HO-CORRECT-04.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "1c2b03bc43464f4679600caa998f5a0033f81fc226ba3b065a5d73ddb9159505"
+    },
+    {
+      "case_id": "HO-CORRECT-05",
+      "scenario": "correct_order",
+      "expected_lines": [
+        {
+          "sku": "SKU-TOWEL-BLU",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-TOWEL-BLU",
+          "quantity": 1,
+          "name": "Blue Bath Towel"
+        }
+      ],
+      "expected_decision": "seal",
+      "image": "images/HO-CORRECT-05.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "ef0da2d3698b195e22e9d06955eea243b8c9b949a4a82617854bc6bca792535a"
+    },
+    {
+      "case_id": "HO-CORRECT-06",
+      "scenario": "correct_order",
+      "expected_lines": [
+        {
+          "sku": "SKU-LAMP-LED",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-LAMP-LED",
+          "quantity": 1,
+          "name": "LED Desk Lamp"
+        }
+      ],
+      "expected_decision": "seal",
+      "image": "images/HO-CORRECT-06.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "4a93a981ef3973c0f1aa155ec864c6478965b8e3707efff3f53e483215cca62a"
+    },
+    {
+      "case_id": "HO-CORRECT-07",
+      "scenario": "correct_order",
+      "expected_lines": [
+        {
+          "sku": "SKU-LEASH-6FT",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-LEASH-6FT",
+          "quantity": 1,
+          "name": "Dog Leash 6ft"
+        }
+      ],
+      "expected_decision": "seal",
+      "image": "images/HO-CORRECT-07.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "b7d4ee4f731ae6702fa311aa4e78ce6bc47457764265828aaa123189bd00b59a"
+    },
+    {
+      "case_id": "HO-CORRECT-08",
+      "scenario": "correct_order",
+      "expected_lines": [
+        {
+          "sku": "SKU-PUZZLE-500",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-PUZZLE-500",
+          "quantity": 1,
+          "name": "500-Piece Puzzle"
+        }
+      ],
+      "expected_decision": "seal",
+      "image": "images/HO-CORRECT-08.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "e98778ebe9214eceb7669ad2f9453eae4724769e8fac05403c888ab19316f8bf"
+    },
+    {
+      "case_id": "HO-CORRECT-09",
+      "scenario": "correct_order",
+      "expected_lines": [
+        {
+          "sku": "SKU-SERUM-30",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-SERUM-30",
+          "quantity": 1,
+          "name": "Face Serum 30ml"
+        }
+      ],
+      "expected_decision": "seal",
+      "image": "images/HO-CORRECT-09.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "cd6a824e43dbaf41042d69bd074f6b770e0afb1cf159d4af114a845ae058b646"
+    },
+    {
+      "case_id": "HO-CORRECT-10",
+      "scenario": "correct_order",
+      "expected_lines": [
+        {
+          "sku": "SKU-PROT-1KG",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-PROT-1KG",
+          "quantity": 1,
+          "name": "Protein Powder 1kg"
+        }
+      ],
+      "expected_decision": "seal",
+      "image": "images/HO-CORRECT-10.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "191e3b2c1a092f0e125918cdc1dea2d97639953a22cecbb37c456735bed17dd1"
+    },
+    {
+      "case_id": "HO-MISSING-01",
+      "scenario": "missing_item",
+      "expected_lines": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1
+        },
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1,
+          "name": "Water Bottle 750ml"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "image": "images/HO-MISSING-01.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "8c904c7c378e4beaeed2c30218e5eb13507bc6914dac87c75344fe65b91248b1"
+    },
+    {
+      "case_id": "HO-MISSING-02",
+      "scenario": "missing_item",
+      "expected_lines": [
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 1
+        },
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 1,
+          "name": "Scented Candle"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "image": "images/HO-MISSING-02.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "1b63971d630217fe77035fea2faecebbadb9f05f459ee1e25fd0452cc5879509"
+    },
+    {
+      "case_id": "HO-MISSING-03",
+      "scenario": "missing_item",
+      "expected_lines": [
+        {
+          "sku": "SKU-TOWEL-BLU",
+          "quantity": 1
+        },
+        {
+          "sku": "SKU-LAMP-LED",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-TOWEL-BLU",
+          "quantity": 1,
+          "name": "Blue Bath Towel"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "image": "images/HO-MISSING-03.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "ef0da2d3698b195e22e9d06955eea243b8c9b949a4a82617854bc6bca792535a"
+    },
+    {
+      "case_id": "HO-MISSING-04",
+      "scenario": "missing_item",
+      "expected_lines": [
+        {
+          "sku": "SKU-SERUM-30",
+          "quantity": 1
+        },
+        {
+          "sku": "SKU-PROT-1KG",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-SERUM-30",
+          "quantity": 1,
+          "name": "Face Serum 30ml"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "image": "images/HO-MISSING-04.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "cd6a824e43dbaf41042d69bd074f6b770e0afb1cf159d4af114a845ae058b646"
+    },
+    {
+      "case_id": "HO-WRONG-01",
+      "scenario": "wrong_item",
+      "expected_lines": [
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1,
+          "name": "Water Bottle 750ml"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "image": "images/HO-WRONG-01.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "8c904c7c378e4beaeed2c30218e5eb13507bc6914dac87c75344fe65b91248b1"
+    },
+    {
+      "case_id": "HO-WRONG-02",
+      "scenario": "wrong_item",
+      "expected_lines": [
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 1,
+          "name": "Ceramic Mug 11oz"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "image": "images/HO-WRONG-02.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "1c2b03bc43464f4679600caa998f5a0033f81fc226ba3b065a5d73ddb9159505"
+    },
+    {
+      "case_id": "HO-WRONG-03",
+      "scenario": "wrong_item",
+      "expected_lines": [
+        {
+          "sku": "SKU-LAMP-LED",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-TOWEL-BLU",
+          "quantity": 1,
+          "name": "Blue Bath Towel"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "image": "images/HO-WRONG-03.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "ef0da2d3698b195e22e9d06955eea243b8c9b949a4a82617854bc6bca792535a"
+    },
+    {
+      "case_id": "HO-WRONG-04",
+      "scenario": "wrong_item",
+      "expected_lines": [
+        {
+          "sku": "SKU-PROT-1KG",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-SERUM-30",
+          "quantity": 1,
+          "name": "Face Serum 30ml"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "image": "images/HO-WRONG-04.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "cd6a824e43dbaf41042d69bd074f6b770e0afb1cf159d4af114a845ae058b646"
+    },
+    {
+      "case_id": "HO-EXTRA-01",
+      "scenario": "extra_item",
+      "expected_lines": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1,
+          "name": "Water Bottle 750ml"
+        },
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 1,
+          "name": "USB-C Charging Cable"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "image": "images/HO-EXTRA-01.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "ee47c1a6253d2e8917c7ce883b19073c089aaed06467043e077bfcb6d127efef"
+    },
+    {
+      "case_id": "HO-EXTRA-02",
+      "scenario": "extra_item",
+      "expected_lines": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 1,
+          "name": "Ceramic Mug 11oz"
+        },
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 1,
+          "name": "Scented Candle"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "image": "images/HO-EXTRA-02.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "db9cb9ac8c8f21d69558164c8760bde039833fd730ab72a62569c92013d28da2"
+    },
+    {
+      "case_id": "HO-EXTRA-03",
+      "scenario": "extra_item",
+      "expected_lines": [
+        {
+          "sku": "SKU-TOWEL-BLU",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-TOWEL-BLU",
+          "quantity": 1,
+          "name": "Blue Bath Towel"
+        },
+        {
+          "sku": "SKU-LEASH-6FT",
+          "quantity": 1,
+          "name": "Dog Leash 6ft"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "image": "images/HO-EXTRA-03.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "68ac3f868957ba6dc5316f4388bef7e3c00c6de05db9e59401ccaa1e171147ab"
+    },
+    {
+      "case_id": "HO-EXTRA-04",
+      "scenario": "extra_item",
+      "expected_lines": [
+        {
+          "sku": "SKU-PUZZLE-500",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-PUZZLE-500",
+          "quantity": 1,
+          "name": "500-Piece Puzzle"
+        },
+        {
+          "sku": "SKU-SERUM-30",
+          "quantity": 1,
+          "name": "Face Serum 30ml"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "image": "images/HO-EXTRA-04.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "2692660fb6998c4adddea82ba3ad68f38b4950989cb5e960f2d39977c09a6e7a"
+    },
+    {
+      "case_id": "HO-QTY-01",
+      "scenario": "wrong_quantity",
+      "expected_lines": [
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 2
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 1,
+          "name": "USB-C Charging Cable"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "image": "images/HO-QTY-01.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "a76436736b6e154aaaa0ac82cb93ba01890fc75a4e7a3b75011f4ad12ab49f35"
+    },
+    {
+      "case_id": "HO-QTY-02",
+      "scenario": "wrong_quantity",
+      "expected_lines": [
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 2
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 1,
+          "name": "Scented Candle"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "image": "images/HO-QTY-02.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "1b63971d630217fe77035fea2faecebbadb9f05f459ee1e25fd0452cc5879509"
+    },
+    {
+      "case_id": "HO-QTY-03",
+      "scenario": "wrong_quantity",
+      "expected_lines": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 2
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 1,
+          "name": "Ceramic Mug 11oz"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "image": "images/HO-QTY-03.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "1c2b03bc43464f4679600caa998f5a0033f81fc226ba3b065a5d73ddb9159505"
+    },
+    {
+      "case_id": "HO-QTY-04",
+      "scenario": "wrong_quantity",
+      "expected_lines": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 2
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1,
+          "name": "Water Bottle 750ml"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "image": "images/HO-QTY-04.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "8c904c7c378e4beaeed2c30218e5eb13507bc6914dac87c75344fe65b91248b1"
+    },
+    {
+      "case_id": "HO-MULTI-01",
+      "scenario": "multiple_identical",
+      "expected_lines": [
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 2
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 2,
+          "name": "USB-C Charging Cable"
+        }
+      ],
+      "expected_decision": "seal",
+      "image": "images/HO-MULTI-01.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "eb6342fd5e2fa2a225da3085185552127511a1ddeeb831d6788fc5d7f72dabe5"
+    },
+    {
+      "case_id": "HO-MULTI-02",
+      "scenario": "multiple_identical",
+      "expected_lines": [
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 2
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 2,
+          "name": "Scented Candle"
+        }
+      ],
+      "expected_decision": "seal",
+      "image": "images/HO-MULTI-02.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "240510776419dd96bc13b71ce1e1d2e180d0b5501b716318343cbc6ad6da90bb"
+    },
+    {
+      "case_id": "HO-MULTI-03",
+      "scenario": "multiple_identical",
+      "expected_lines": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 2
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 2,
+          "name": "Ceramic Mug 11oz"
+        }
+      ],
+      "expected_decision": "seal",
+      "image": "images/HO-MULTI-03.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "c03af28978261295e143d4128247b69de32cb536bf77762dc10083c8e827948b"
+    },
+    {
+      "case_id": "HO-MULTI-04",
+      "scenario": "multiple_identical",
+      "expected_lines": [
+        {
+          "sku": "SKU-SERUM-30",
+          "quantity": 2
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-SERUM-30",
+          "quantity": 2,
+          "name": "Face Serum 30ml"
+        }
+      ],
+      "expected_decision": "seal",
+      "image": "images/HO-MULTI-04.jpg",
+      "notes": "",
+      "quality": "ok",
+      "split": "held_out",
+      "image_sha256": "62a66d157ad0cda34a8d9d342133255fdad1bbb1a7952f1c2068db5af6d08e94"
+    },
+    {
+      "case_id": "HO-SIMILAR-01",
+      "scenario": "visually_similar",
+      "expected_lines": [
+        {
+          "sku": "SKU-SERUM-30",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1,
+          "name": "Water Bottle 750ml"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "image": "images/HO-SIMILAR-01.jpg",
+      "notes": "Deliberately darkened; may produce UNCERTAIN",
+      "quality": "degraded",
+      "split": "held_out",
+      "image_sha256": "f01233ae9448be41be1a9e2f0fd3fed923fd97bdd8a9751ea270e650edeaeac9"
+    },
+    {
+      "case_id": "HO-SIMILAR-02",
+      "scenario": "visually_similar",
+      "expected_lines": [
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 1,
+          "name": "Ceramic Mug 11oz"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "image": "images/HO-SIMILAR-02.jpg",
+      "notes": "Deliberately darkened; may produce UNCERTAIN",
+      "quality": "degraded",
+      "split": "held_out",
+      "image_sha256": "b60dce29fcb3d3aac709d0dcb66852fe23f1650e20235d61c9c49c1b884a34a1"
+    },
+    {
+      "case_id": "HO-SIMILAR-03",
+      "scenario": "visually_similar",
+      "expected_lines": [
+        {
+          "sku": "SKU-LAMP-LED",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-PROT-1KG",
+          "quantity": 1,
+          "name": "Protein Powder 1kg"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "image": "images/HO-SIMILAR-03.jpg",
+      "notes": "Deliberately darkened; may produce UNCERTAIN",
+      "quality": "degraded",
+      "split": "held_out",
+      "image_sha256": "316ddc22a220299e7e8e155110c93c17c4becab070872b8f2af87818463a594a"
+    },
+    {
+      "case_id": "HO-SIMILAR-04",
+      "scenario": "visually_similar",
+      "expected_lines": [
+        {
+          "sku": "SKU-LEASH-6FT",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 1,
+          "name": "USB-C Charging Cable"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "image": "images/HO-SIMILAR-04.jpg",
+      "notes": "Deliberately darkened; may produce UNCERTAIN",
+      "quality": "degraded",
+      "split": "held_out",
+      "image_sha256": "ecb14659c9be07cb71ba760b25019b7c60570d682b1400a041059d2d2e33f848"
+    },
+    {
+      "case_id": "HO-AMBIG-01",
+      "scenario": "ambiguous_photos",
+      "expected_lines": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1,
+          "name": "Water Bottle 750ml"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "image": "images/HO-AMBIG-01.jpg",
+      "notes": "Blur/dark fixture; SEAL would be unsafe",
+      "quality": "ambiguous",
+      "split": "held_out",
+      "image_sha256": "a4cad6559ca0eef2a73926e944510c8fcff7f53471027396520c400b0c13cc1e"
+    },
+    {
+      "case_id": "HO-AMBIG-02",
+      "scenario": "ambiguous_photos",
+      "expected_lines": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 1,
+          "name": "Ceramic Mug 11oz"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "image": "images/HO-AMBIG-02.jpg",
+      "notes": "Blur/dark fixture; SEAL would be unsafe",
+      "quality": "ambiguous",
+      "split": "held_out",
+      "image_sha256": "6a2f95ef206454cf895ba1e1c4182f16043364fe4bee7823d723f3629d5a4a87"
+    },
+    {
+      "case_id": "HO-AMBIG-03",
+      "scenario": "ambiguous_photos",
+      "expected_lines": [
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 1,
+          "name": "USB-C Charging Cable"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "image": "images/HO-AMBIG-03.jpg",
+      "notes": "Blur/dark fixture; SEAL would be unsafe",
+      "quality": "ambiguous",
+      "split": "held_out",
+      "image_sha256": "5ee1e0fb7a7e39dfc57b2eac4eabfb36a5ee01b4c49449524919dc15e1c7c0d1"
+    },
+    {
+      "case_id": "HO-AMBIG-04",
+      "scenario": "ambiguous_photos",
+      "expected_lines": [
+        {
+          "sku": "SKU-TOWEL-BLU",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-TOWEL-BLU",
+          "quantity": 1,
+          "name": "Blue Bath Towel"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "image": "images/HO-AMBIG-04.jpg",
+      "notes": "Blur/dark fixture; SEAL would be unsafe",
+      "quality": "ambiguous",
+      "split": "held_out",
+      "image_sha256": "d6f852faadaf83d8bcff04b2cf1d618ce385ae5bf8b82cc3da7fb979a98ca53b"
+    }
+  ]
+}

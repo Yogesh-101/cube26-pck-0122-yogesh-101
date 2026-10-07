@@ -114,11 +114,15 @@ class TestWrongItem:
             observed_items=make_observed(("SKU-RED-CAP", "Red Cap", 1, 0.95)),
         )
         assert result.decision == Decision.STOP_AND_FIX
-        # SKU-BLUE-CAP missing + SKU-RED-CAP extra
+        # SKU-BLUE-CAP missing + SKU-RED-CAP extra → substitution
         items_check = get_check(result, CheckKey.ITEMS_PRESENT)
         assert items_check.verdict == Verdict.FAIL
         extra_check = get_check(result, CheckKey.NO_EXTRA_ITEMS)
         assert extra_check.verdict == Verdict.FAIL
+        wrong_check = get_check(result, CheckKey.NO_WRONG_ITEMS)
+        assert wrong_check is not None
+        assert wrong_check.verdict == Verdict.FAIL
+        assert any(d.discrepancy_type == "wrong_item" for d in result.discrepancies)
 
     def test_wrong_plus_correct(self):
         """Order has 2 items, one correct and one swapped."""

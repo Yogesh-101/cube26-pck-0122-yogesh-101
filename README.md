@@ -57,12 +57,14 @@ Order + Catalogue → Input Validation → Image Quality Gate → Gemini VLM (si
 | Decision | Rationale |
 |---|---|
 | Single batched VLM call per unit | Engineering Rule 2: one call carrying all checks, not one per check |
+| **Order-blind VLM prompt** | Expected order never sent to Gemini — closes re-score "order in prompt" gap |
 | Deterministic decision engine | Final SEAL/STOP never depends on raw LLM output |
+| Held-out photo eval | `data/eval/held_out/` real product photos; results in `data/eval/results/` |
 | UNCERTAIN → human review | Never auto-seal when evidence is insufficient |
 | Fail-open on errors | Engineering Rule 3: model timeout saves pending record, never blocks operator |
 | Org-scoped queries | Engineering Rule 1: tenancy isolation tested with two demo orgs |
 | Content hash on evidence | SHA-256 of canonical JSON. Detects accidental change. It is not a tamper-evident or anchored ledger |
-| Bounded Gemini retry | Transient 503, 429, 500, 504, and network errors retry with backoff (`VLM_MAX_RETRIES`, `VLM_RETRY_BASE_SECONDS`). 400 and 401 do not retry |
+| Bounded Gemini retry | Transient 503/429 honour `retryDelay`; daily-quota delays fail fast |
 
 ---
 
@@ -122,8 +124,16 @@ python -m pytest tests/ -v
 ### Run Evaluation
 
 ```bash
+# A) Rules-only decision engine (not vision accuracy)
 python -m tests.evaluation.eval_harness --output docs/EVALUATION.md
+
+# B) Held-out photo eval — order-blind Gemini (headline for re-score)
+python scripts/build_eval_photos.py          # once: fixtures + frozen GT
+python scripts/run_photo_eval.py --model gemini-3.8-flash --sleep 20
+python scripts/run_photo_eval.py --model gemini-3.8-flash --sleep 20 --resume
 ```
+
+See `data/eval/README.md` and `docs/EVALUATION.md`.
 
 ### Docker
 

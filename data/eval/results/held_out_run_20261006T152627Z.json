@@ -1,0 +1,1507 @@
+{
+  "summary": {
+    "dataset_id": "pck-held-out-v1",
+    "started_at": "2026-10-06T15:08:01.433212+00:00",
+    "finished_at": "2026-10-06T15:26:27.779862+00:00",
+    "n_cases": 38,
+    "decision_accuracy": 0.0263,
+    "observation_exact_match": 0.0263,
+    "false_seal": 0,
+    "false_stop": 0,
+    "uncertain_check_cases": 0,
+    "pending_failures": 37,
+    "errors": 0,
+    "order_blind": true,
+    "prompt_contains_expected_order": false,
+    "per_scenario": {
+      "ambiguous_photos": {
+        "total": 4,
+        "decision_correct": 0,
+        "decision_accuracy": 0.0,
+        "observation_exact": 0
+      },
+      "correct_order": {
+        "total": 10,
+        "decision_correct": 1,
+        "decision_accuracy": 0.1,
+        "observation_exact": 1
+      },
+      "extra_item": {
+        "total": 4,
+        "decision_correct": 0,
+        "decision_accuracy": 0.0,
+        "observation_exact": 0
+      },
+      "missing_item": {
+        "total": 4,
+        "decision_correct": 0,
+        "decision_accuracy": 0.0,
+        "observation_exact": 0
+      },
+      "multiple_identical": {
+        "total": 4,
+        "decision_correct": 0,
+        "decision_accuracy": 0.0,
+        "observation_exact": 0
+      },
+      "visually_similar": {
+        "total": 4,
+        "decision_correct": 0,
+        "decision_accuracy": 0.0,
+        "observation_exact": 0
+      },
+      "wrong_item": {
+        "total": 4,
+        "decision_correct": 0,
+        "decision_accuracy": 0.0,
+        "observation_exact": 0
+      },
+      "wrong_quantity": {
+        "total": 4,
+        "decision_correct": 0,
+        "decision_accuracy": 0.0,
+        "observation_exact": 0
+      }
+    },
+    "method": "Live Gemini observation with order-blind prompt (catalogue only). Deterministic decision engine compares observations to the order. Ground truth frozen in manifest before this run."
+  },
+  "records": [
+    {
+      "case_id": "HO-CORRECT-01",
+      "scenario": "correct_order",
+      "image": "images/HO-CORRECT-01.jpg",
+      "image_sha256": "8c904c7c378e4beaeed2c30218e5eb13507bc6914dac87c75344fe65b91248b1",
+      "expected_lines": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1,
+          "name": "Water Bottle 750ml"
+        }
+      ],
+      "expected_decision": "seal",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 45457.0,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-3F7C17F45886",
+      "content_hash": "2d37b243545041548fad7af2d98832242d2c907b9b930713f0da159588d72391"
+    },
+    {
+      "case_id": "HO-CORRECT-02",
+      "scenario": "correct_order",
+      "image": "images/HO-CORRECT-02.jpg",
+      "image_sha256": "a76436736b6e154aaaa0ac82cb93ba01890fc75a4e7a3b75011f4ad12ab49f35",
+      "expected_lines": [
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 1,
+          "name": "USB-C Charging Cable"
+        }
+      ],
+      "expected_decision": "seal",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 23873.0,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-630CD56A26CA",
+      "content_hash": "196223dceb4e4066087b614b68c51eeebc600f2f4433e2344c780b94be318bf1"
+    },
+    {
+      "case_id": "HO-CORRECT-03",
+      "scenario": "correct_order",
+      "image": "images/HO-CORRECT-03.jpg",
+      "image_sha256": "1b63971d630217fe77035fea2faecebbadb9f05f459ee1e25fd0452cc5879509",
+      "expected_lines": [
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 1,
+          "name": "Scented Candle"
+        }
+      ],
+      "expected_decision": "seal",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 125800.3,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}} (retried, 2 attempts) (60s time budget exhausted)"
+        }
+      ],
+      "evidence_record_id": "PCK-A3B096AFA8BA",
+      "content_hash": "09070632ee512ffb6671876a14713a992ff4c38ff50ec1c77badbc6d8db7e6dc"
+    },
+    {
+      "case_id": "HO-CORRECT-04",
+      "scenario": "correct_order",
+      "image": "images/HO-CORRECT-04.jpg",
+      "image_sha256": "1c2b03bc43464f4679600caa998f5a0033f81fc226ba3b065a5d73ddb9159505",
+      "expected_lines": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 1,
+          "name": "Ceramic Mug 11oz"
+        }
+      ],
+      "expected_decision": "seal",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 21151.6,
+      "status": "completed",
+      "model_version": "gemini-flash-latest",
+      "observed_items": [
+        {
+          "sku": "SKU-MUG-11",
+          "name": "Ceramic Mug 11oz",
+          "observed_quantity": 1,
+          "confidence": 0.95,
+          "observation_text": "A plain white ceramic mug with a handle sitting on a flat surface."
+        }
+      ],
+      "decision": "seal",
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "pass",
+          "confidence": 1.0,
+          "detail": "Image quality sufficient for verification"
+        },
+        {
+          "key": "items_present",
+          "verdict": "pass",
+          "confidence": 0.95,
+          "detail": "All expected items identified in the package"
+        },
+        {
+          "key": "quantity_match",
+          "verdict": "pass",
+          "confidence": 0.95,
+          "detail": "All quantities match expected order"
+        },
+        {
+          "key": "no_extra_items",
+          "verdict": "pass",
+          "confidence": 0.95,
+          "detail": "No unexpected items detected"
+        },
+        {
+          "key": "no_wrong_items",
+          "verdict": "pass",
+          "confidence": 0.95,
+          "detail": "No wrong-item substitution detected"
+        }
+      ],
+      "evidence_record_id": "PCK-392198F53280",
+      "content_hash": "344d63106f92d67e9bd02f0d1fda25c66f6f35298d6b9e46e11c4eb4c14ef760",
+      "decision_match": true
+    },
+    {
+      "case_id": "HO-CORRECT-05",
+      "scenario": "correct_order",
+      "image": "images/HO-CORRECT-05.jpg",
+      "image_sha256": "ef0da2d3698b195e22e9d06955eea243b8c9b949a4a82617854bc6bca792535a",
+      "expected_lines": [
+        {
+          "sku": "SKU-TOWEL-BLU",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-TOWEL-BLU",
+          "quantity": 1,
+          "name": "Blue Bath Towel"
+        }
+      ],
+      "expected_decision": "seal",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 78864.7,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}} (60s time budget exhausted)"
+        }
+      ],
+      "evidence_record_id": "PCK-0F28848D4CD6",
+      "content_hash": "d7c1da25622a5023b459a132f573f89016a929760d1285f1141882aacd99d004"
+    },
+    {
+      "case_id": "HO-CORRECT-06",
+      "scenario": "correct_order",
+      "image": "images/HO-CORRECT-06.jpg",
+      "image_sha256": "4a93a981ef3973c0f1aa155ec864c6478965b8e3707efff3f53e483215cca62a",
+      "expected_lines": [
+        {
+          "sku": "SKU-LAMP-LED",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-LAMP-LED",
+          "quantity": 1,
+          "name": "LED Desk Lamp"
+        }
+      ],
+      "expected_decision": "seal",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 13298.4,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-4706BD8DFFFB",
+      "content_hash": "5133771930cfbd708569cd75960ea97315a670079bb207c9bab721fb7deb681e"
+    },
+    {
+      "case_id": "HO-CORRECT-07",
+      "scenario": "correct_order",
+      "image": "images/HO-CORRECT-07.jpg",
+      "image_sha256": "b7d4ee4f731ae6702fa311aa4e78ce6bc47457764265828aaa123189bd00b59a",
+      "expected_lines": [
+        {
+          "sku": "SKU-LEASH-6FT",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-LEASH-6FT",
+          "quantity": 1,
+          "name": "Dog Leash 6ft"
+        }
+      ],
+      "expected_decision": "seal",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 11982.0,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-9F1505465528",
+      "content_hash": "74c9c24b797eaabe3e219277d209756fe51e4c1fd9d6b874717e3e99a7b80bec"
+    },
+    {
+      "case_id": "HO-CORRECT-08",
+      "scenario": "correct_order",
+      "image": "images/HO-CORRECT-08.jpg",
+      "image_sha256": "e98778ebe9214eceb7669ad2f9453eae4724769e8fac05403c888ab19316f8bf",
+      "expected_lines": [
+        {
+          "sku": "SKU-PUZZLE-500",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-PUZZLE-500",
+          "quantity": 1,
+          "name": "500-Piece Puzzle"
+        }
+      ],
+      "expected_decision": "seal",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 68690.4,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}} (retried, 2 attempts) (60s time budget exhausted)"
+        }
+      ],
+      "evidence_record_id": "PCK-457887D05CB3",
+      "content_hash": "e0710539c7d0b982af5cdb4bd3fa4a15525631d879950a4750dbae737cbca4f6"
+    },
+    {
+      "case_id": "HO-CORRECT-09",
+      "scenario": "correct_order",
+      "image": "images/HO-CORRECT-09.jpg",
+      "image_sha256": "cd6a824e43dbaf41042d69bd074f6b770e0afb1cf159d4af114a845ae058b646",
+      "expected_lines": [
+        {
+          "sku": "SKU-SERUM-30",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-SERUM-30",
+          "quantity": 1,
+          "name": "Face Serum 30ml"
+        }
+      ],
+      "expected_decision": "seal",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 5788.7,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h43m51.683430988s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-3.8-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '31431s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-C80A9D36CF0A",
+      "content_hash": "799d9be129f60110723d0e6959826ff67217c3f587bf5ae1ebd0a6cf52246efa"
+    },
+    {
+      "case_id": "HO-CORRECT-10",
+      "scenario": "correct_order",
+      "image": "images/HO-CORRECT-10.jpg",
+      "image_sha256": "191e3b2c1a092f0e125918cdc1dea2d97639953a22cecbb37c456735bed17dd1",
+      "expected_lines": [
+        {
+          "sku": "SKU-PROT-1KG",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-PROT-1KG",
+          "quantity": 1,
+          "name": "Protein Powder 1kg"
+        }
+      ],
+      "expected_decision": "seal",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 5324.2,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h43m32.291346717s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-3.8-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '31412s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-992635FBDE9C",
+      "content_hash": "1e1f573ac45639e43e5e3918dfc4d029b9816d47a420c6eb9473ba2d4ed469c2"
+    },
+    {
+      "case_id": "HO-MISSING-01",
+      "scenario": "missing_item",
+      "image": "images/HO-MISSING-01.jpg",
+      "image_sha256": "8c904c7c378e4beaeed2c30218e5eb13507bc6914dac87c75344fe65b91248b1",
+      "expected_lines": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1
+        },
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1,
+          "name": "Water Bottle 750ml"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 7268.1,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h43m11.064943505s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-3.8-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '31391s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-18A1C567EE6B",
+      "content_hash": "9ce81efc14a07bc876151aacd25b5355a44e89bf723b2d2b8cf969dd640d7534"
+    },
+    {
+      "case_id": "HO-MISSING-02",
+      "scenario": "missing_item",
+      "image": "images/HO-MISSING-02.jpg",
+      "image_sha256": "1b63971d630217fe77035fea2faecebbadb9f05f459ee1e25fd0452cc5879509",
+      "expected_lines": [
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 1
+        },
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 1,
+          "name": "Scented Candle"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 5769.5,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h42m51.28289242s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-3.8-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '31371s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-846911E07151",
+      "content_hash": "45ca861c29852767855157f40c38983b24a9629fb75de0117ebe64c4ddff7833"
+    },
+    {
+      "case_id": "HO-MISSING-03",
+      "scenario": "missing_item",
+      "image": "images/HO-MISSING-03.jpg",
+      "image_sha256": "ef0da2d3698b195e22e9d06955eea243b8c9b949a4a82617854bc6bca792535a",
+      "expected_lines": [
+        {
+          "sku": "SKU-TOWEL-BLU",
+          "quantity": 1
+        },
+        {
+          "sku": "SKU-LAMP-LED",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-TOWEL-BLU",
+          "quantity": 1,
+          "name": "Blue Bath Towel"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 5638.0,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h42m31.6187845s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-3.8-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '31351s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-D7FA1FD6012B",
+      "content_hash": "8badd4b273c2b8ecb1d3c91f93520c3edfadec3e98ba5267bf3f2486383dd7ef"
+    },
+    {
+      "case_id": "HO-MISSING-04",
+      "scenario": "missing_item",
+      "image": "images/HO-MISSING-04.jpg",
+      "image_sha256": "cd6a824e43dbaf41042d69bd074f6b770e0afb1cf159d4af114a845ae058b646",
+      "expected_lines": [
+        {
+          "sku": "SKU-SERUM-30",
+          "quantity": 1
+        },
+        {
+          "sku": "SKU-PROT-1KG",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-SERUM-30",
+          "quantity": 1,
+          "name": "Face Serum 30ml"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 5898.2,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h42m11.719671156s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-3.8-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '31331s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-CE9C689E9A41",
+      "content_hash": "242a5457ad21a6eb259e85ca3e598df2252387845404c76e84ab790b6db7d71b"
+    },
+    {
+      "case_id": "HO-WRONG-01",
+      "scenario": "wrong_item",
+      "image": "images/HO-WRONG-01.jpg",
+      "image_sha256": "8c904c7c378e4beaeed2c30218e5eb13507bc6914dac87c75344fe65b91248b1",
+      "expected_lines": [
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1,
+          "name": "Water Bottle 750ml"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 5456.4,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h41m52.254819568s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-3.8-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '31312s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-6497275A73D2",
+      "content_hash": "4c3fc1a4eae0744c3f30e95afadceb72c655c77abc11db7d5bd72e9bc379917f"
+    },
+    {
+      "case_id": "HO-WRONG-02",
+      "scenario": "wrong_item",
+      "image": "images/HO-WRONG-02.jpg",
+      "image_sha256": "1c2b03bc43464f4679600caa998f5a0033f81fc226ba3b065a5d73ddb9159505",
+      "expected_lines": [
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 1,
+          "name": "Ceramic Mug 11oz"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 6477.8,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h41m31.786535436s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-3.8-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '31291s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-3FF1E254757B",
+      "content_hash": "1860310c38214358e083fdae6f34678e2f56a51e0add07fe1f1ed85e6645c5d2"
+    },
+    {
+      "case_id": "HO-WRONG-03",
+      "scenario": "wrong_item",
+      "image": "images/HO-WRONG-03.jpg",
+      "image_sha256": "ef0da2d3698b195e22e9d06955eea243b8c9b949a4a82617854bc6bca792535a",
+      "expected_lines": [
+        {
+          "sku": "SKU-LAMP-LED",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-TOWEL-BLU",
+          "quantity": 1,
+          "name": "Blue Bath Towel"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 6015.5,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h41m11.748413333s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'model': 'gemini-3.8-flash', 'location': 'global'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '31271s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-2884352FAF93",
+      "content_hash": "7b14ed047537cdfa4740cc452d13bdf5225bb9ca5109c5335177cd701b96d556"
+    },
+    {
+      "case_id": "HO-WRONG-04",
+      "scenario": "wrong_item",
+      "image": "images/HO-WRONG-04.jpg",
+      "image_sha256": "cd6a824e43dbaf41042d69bd074f6b770e0afb1cf159d4af114a845ae058b646",
+      "expected_lines": [
+        {
+          "sku": "SKU-PROT-1KG",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-SERUM-30",
+          "quantity": 1,
+          "name": "Face Serum 30ml"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 5972.2,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h40m51.778732176s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'model': 'gemini-3.8-flash', 'location': 'global'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '31251s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-E208E018621A",
+      "content_hash": "1f70ece0483f7f609c21d37cb4c05de94c5154536a9b4a88741cae0350fd6a9d"
+    },
+    {
+      "case_id": "HO-EXTRA-01",
+      "scenario": "extra_item",
+      "image": "images/HO-EXTRA-01.jpg",
+      "image_sha256": "ee47c1a6253d2e8917c7ce883b19073c089aaed06467043e077bfcb6d127efef",
+      "expected_lines": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1,
+          "name": "Water Bottle 750ml"
+        },
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 1,
+          "name": "USB-C Charging Cable"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 5767.1,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h40m32.014717141s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-3.8-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '31232s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-5381C3A9B775",
+      "content_hash": "9d4d7de626be28bdafb17fa37cabfb553246e04205377ed9295227bfa5297441"
+    },
+    {
+      "case_id": "HO-EXTRA-02",
+      "scenario": "extra_item",
+      "image": "images/HO-EXTRA-02.jpg",
+      "image_sha256": "db9cb9ac8c8f21d69558164c8760bde039833fd730ab72a62569c92013d28da2",
+      "expected_lines": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 1,
+          "name": "Ceramic Mug 11oz"
+        },
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 1,
+          "name": "Scented Candle"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 6509.1,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h40m11.629598361s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'model': 'gemini-3.8-flash', 'location': 'global'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '31211s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-29EBBAEEC400",
+      "content_hash": "4f6f84f9a4c1ceca9b1829b60bbd5de69f3c42fa680c8c555c5841b89ce4e76d"
+    },
+    {
+      "case_id": "HO-EXTRA-03",
+      "scenario": "extra_item",
+      "image": "images/HO-EXTRA-03.jpg",
+      "image_sha256": "68ac3f868957ba6dc5316f4388bef7e3c00c6de05db9e59401ccaa1e171147ab",
+      "expected_lines": [
+        {
+          "sku": "SKU-TOWEL-BLU",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-TOWEL-BLU",
+          "quantity": 1,
+          "name": "Blue Bath Towel"
+        },
+        {
+          "sku": "SKU-LEASH-6FT",
+          "quantity": 1,
+          "name": "Dog Leash 6ft"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 7466.5,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h39m50.066579664s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'model': 'gemini-3.8-flash', 'location': 'global'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '31190s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-94BC1133D3DA",
+      "content_hash": "751bf3a0b954b080c8dc59b1bd9ba806bfe6b3ee4c255e74363ba5e374845016"
+    },
+    {
+      "case_id": "HO-EXTRA-04",
+      "scenario": "extra_item",
+      "image": "images/HO-EXTRA-04.jpg",
+      "image_sha256": "2692660fb6998c4adddea82ba3ad68f38b4950989cb5e960f2d39977c09a6e7a",
+      "expected_lines": [
+        {
+          "sku": "SKU-PUZZLE-500",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-PUZZLE-500",
+          "quantity": 1,
+          "name": "500-Piece Puzzle"
+        },
+        {
+          "sku": "SKU-SERUM-30",
+          "quantity": 1,
+          "name": "Face Serum 30ml"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 7975.5,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h39m28.060709568s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-3.8-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '31168s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-C146B8650445",
+      "content_hash": "fe5c62468e5e9590abfccf9e5e0e00fbe31c4d1bdb17bf09ee937faf87296903"
+    },
+    {
+      "case_id": "HO-QTY-01",
+      "scenario": "wrong_quantity",
+      "image": "images/HO-QTY-01.jpg",
+      "image_sha256": "a76436736b6e154aaaa0ac82cb93ba01890fc75a4e7a3b75011f4ad12ab49f35",
+      "expected_lines": [
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 2
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 1,
+          "name": "USB-C Charging Cable"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 6606.4,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h39m7.594176218s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-3.8-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '31147s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-CF74107D45F0",
+      "content_hash": "bf1c5f9238d4889ee64e4c1569a3603abb69838a905066dc4abe5e6fc75c7099"
+    },
+    {
+      "case_id": "HO-QTY-02",
+      "scenario": "wrong_quantity",
+      "image": "images/HO-QTY-02.jpg",
+      "image_sha256": "1b63971d630217fe77035fea2faecebbadb9f05f459ee1e25fd0452cc5879509",
+      "expected_lines": [
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 2
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 1,
+          "name": "Scented Candle"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 6488.7,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h38m47.116771344s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'model': 'gemini-3.8-flash', 'location': 'global'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '31127s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-19DB82287602",
+      "content_hash": "d27e85d71d08f3075756b1b0462c64a00c618b2517cc2327773957e55f11a718"
+    },
+    {
+      "case_id": "HO-QTY-03",
+      "scenario": "wrong_quantity",
+      "image": "images/HO-QTY-03.jpg",
+      "image_sha256": "1c2b03bc43464f4679600caa998f5a0033f81fc226ba3b065a5d73ddb9159505",
+      "expected_lines": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 2
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 1,
+          "name": "Ceramic Mug 11oz"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 5845.0,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h38m27.185472941s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-3.8-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '31107s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-1D23020D8A1C",
+      "content_hash": "f77f54cb43779c2e22850583a655e818b298a1f0d4fef3eb7ee156c65b99601b"
+    },
+    {
+      "case_id": "HO-QTY-04",
+      "scenario": "wrong_quantity",
+      "image": "images/HO-QTY-04.jpg",
+      "image_sha256": "8c904c7c378e4beaeed2c30218e5eb13507bc6914dac87c75344fe65b91248b1",
+      "expected_lines": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 2
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1,
+          "name": "Water Bottle 750ml"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 6314.9,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h38m6.815598832s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-3.8-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '31086s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-AECDECA5E816",
+      "content_hash": "136e6f92b9d3731de5b5be9bdde8f9aa91b70461f22367322a3f4edc66fae4c0"
+    },
+    {
+      "case_id": "HO-MULTI-01",
+      "scenario": "multiple_identical",
+      "image": "images/HO-MULTI-01.jpg",
+      "image_sha256": "eb6342fd5e2fa2a225da3085185552127511a1ddeeb831d6788fc5d7f72dabe5",
+      "expected_lines": [
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 2
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 2,
+          "name": "USB-C Charging Cable"
+        }
+      ],
+      "expected_decision": "seal",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 6278.2,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h37m46.528075615s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-3.8-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '31066s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-C0E623A31652",
+      "content_hash": "580c3b0e919f4b26651abed52c77ac5538b874637724caad62b05cb14571924b"
+    },
+    {
+      "case_id": "HO-MULTI-02",
+      "scenario": "multiple_identical",
+      "image": "images/HO-MULTI-02.jpg",
+      "image_sha256": "240510776419dd96bc13b71ce1e1d2e180d0b5501b716318343cbc6ad6da90bb",
+      "expected_lines": [
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 2
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 2,
+          "name": "Scented Candle"
+        }
+      ],
+      "expected_decision": "seal",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 6294.5,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h37m26.220061577s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-3.8-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '31046s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-384B6EB1209C",
+      "content_hash": "bb8d245798468b6f2e5fadda5119f6377b5e0a41d4ad4e0b455c4baefd3167db"
+    },
+    {
+      "case_id": "HO-MULTI-03",
+      "scenario": "multiple_identical",
+      "image": "images/HO-MULTI-03.jpg",
+      "image_sha256": "c03af28978261295e143d4128247b69de32cb536bf77762dc10083c8e827948b",
+      "expected_lines": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 2
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 2,
+          "name": "Ceramic Mug 11oz"
+        }
+      ],
+      "expected_decision": "seal",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 6214.3,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h37m6.124596207s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-3.8-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '31026s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-3086D2F02BF8",
+      "content_hash": "bb1de0ae2d201bdad5ac05ee23727390c6efa049bcde30d7e2d4198367e1d2de"
+    },
+    {
+      "case_id": "HO-MULTI-04",
+      "scenario": "multiple_identical",
+      "image": "images/HO-MULTI-04.jpg",
+      "image_sha256": "62a66d157ad0cda34a8d9d342133255fdad1bbb1a7952f1c2068db5af6d08e94",
+      "expected_lines": [
+        {
+          "sku": "SKU-SERUM-30",
+          "quantity": 2
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-SERUM-30",
+          "quantity": 2,
+          "name": "Face Serum 30ml"
+        }
+      ],
+      "expected_decision": "seal",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 6916.2,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h36m45.118095378s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-3.8-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '31005s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-208306E023B3",
+      "content_hash": "8498926f9078e7d078b96ec263ff9bd94c0535e705b308e17392dc26b19f46f7"
+    },
+    {
+      "case_id": "HO-SIMILAR-01",
+      "scenario": "visually_similar",
+      "image": "images/HO-SIMILAR-01.jpg",
+      "image_sha256": "f01233ae9448be41be1a9e2f0fd3fed923fd97bdd8a9751ea270e650edeaeac9",
+      "expected_lines": [
+        {
+          "sku": "SKU-SERUM-30",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1,
+          "name": "Water Bottle 750ml"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 5817.2,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h36m25.270905421s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'model': 'gemini-3.8-flash', 'location': 'global'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '30985s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-A656AA48536E",
+      "content_hash": "3dbb4ba6e9690c9fa442c6d4e688e5dc3900668108c50fc75ff7014745637954"
+    },
+    {
+      "case_id": "HO-SIMILAR-02",
+      "scenario": "visually_similar",
+      "image": "images/HO-SIMILAR-02.jpg",
+      "image_sha256": "b60dce29fcb3d3aac709d0dcb66852fe23f1650e20235d61c9c49c1b884a34a1",
+      "expected_lines": [
+        {
+          "sku": "SKU-CANDLE-3",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 1,
+          "name": "Ceramic Mug 11oz"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 5360.7,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h36m5.917633564s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-3.8-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '30965s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-D96A9977DCF7",
+      "content_hash": "3017bedabc1cffd960617fd7f346e69b5865d17c3f6d147c8b6bd464a3f77506"
+    },
+    {
+      "case_id": "HO-SIMILAR-03",
+      "scenario": "visually_similar",
+      "image": "images/HO-SIMILAR-03.jpg",
+      "image_sha256": "316ddc22a220299e7e8e155110c93c17c4becab070872b8f2af87818463a594a",
+      "expected_lines": [
+        {
+          "sku": "SKU-LAMP-LED",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-PROT-1KG",
+          "quantity": 1,
+          "name": "Protein Powder 1kg"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 6070.6,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h35m45.877887088s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-3.8-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '30945s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-3CA660AB362D",
+      "content_hash": "e6820f610ea87384ec3e06f5aeb9d3a0f641824033ed9850b0296498aea99373"
+    },
+    {
+      "case_id": "HO-SIMILAR-04",
+      "scenario": "visually_similar",
+      "image": "images/HO-SIMILAR-04.jpg",
+      "image_sha256": "ecb14659c9be07cb71ba760b25019b7c60570d682b1400a041059d2d2e33f848",
+      "expected_lines": [
+        {
+          "sku": "SKU-LEASH-6FT",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 1,
+          "name": "USB-C Charging Cable"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 6335.7,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h35m25.504673045s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-3.8-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '30925s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-FF1B5D9E789D",
+      "content_hash": "870d87c7e76c0c86f3c9e1dd7fbeab0ff1df87e07d60f65c77a9512e8599ad74"
+    },
+    {
+      "case_id": "HO-AMBIG-01",
+      "scenario": "ambiguous_photos",
+      "image": "images/HO-AMBIG-01.jpg",
+      "image_sha256": "a4cad6559ca0eef2a73926e944510c8fcff7f53471027396520c400b0c13cc1e",
+      "expected_lines": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-BOTTLE-750",
+          "quantity": 1,
+          "name": "Water Bottle 750ml"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 5874.3,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h35m5.78558652s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'model': 'gemini-3.8-flash', 'location': 'global'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '30905s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-D5647C669498",
+      "content_hash": "3570241e844518812423abdf5d7be10c63242feb59cef86cb1f770e3b5e924cd"
+    },
+    {
+      "case_id": "HO-AMBIG-02",
+      "scenario": "ambiguous_photos",
+      "image": "images/HO-AMBIG-02.jpg",
+      "image_sha256": "6a2f95ef206454cf895ba1e1c4182f16043364fe4bee7823d723f3629d5a4a87",
+      "expected_lines": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-MUG-11",
+          "quantity": 1,
+          "name": "Ceramic Mug 11oz"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 5834.4,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h34m45.810985825s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'model': 'gemini-3.8-flash', 'location': 'global'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '30885s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-FBF7A3FE58EC",
+      "content_hash": "4dce8da62e95bc85d8c0b444eb395358dbfa71207150fad5fcee3c34eed1b468"
+    },
+    {
+      "case_id": "HO-AMBIG-03",
+      "scenario": "ambiguous_photos",
+      "image": "images/HO-AMBIG-03.jpg",
+      "image_sha256": "5ee1e0fb7a7e39dfc57b2eac4eabfb36a5ee01b4c49449524919dc15e1c7c0d1",
+      "expected_lines": [
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-CABLE-USBC",
+          "quantity": 1,
+          "name": "USB-C Charging Cable"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 5944.5,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h34m25.869890703s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'model': 'gemini-3.8-flash', 'location': 'global'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '30865s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-503962F5E2E1",
+      "content_hash": "21c2c43c6a60fd133ebc2ef781997ff9fec5a80426731a57f63e4686eeeaf1d7"
+    },
+    {
+      "case_id": "HO-AMBIG-04",
+      "scenario": "ambiguous_photos",
+      "image": "images/HO-AMBIG-04.jpg",
+      "image_sha256": "d6f852faadaf83d8bcff04b2cf1d618ce385ae5bf8b82cc3da7fb979a98ca53b",
+      "expected_lines": [
+        {
+          "sku": "SKU-TOWEL-BLU",
+          "quantity": 1
+        }
+      ],
+      "ground_truth_observed": [
+        {
+          "sku": "SKU-TOWEL-BLU",
+          "quantity": 1,
+          "name": "Blue Bath Towel"
+        }
+      ],
+      "expected_decision": "stop_and_fix",
+      "mode": "live_gemini_order_blind",
+      "latency_ms": 5683.5,
+      "status": "pending",
+      "model_version": "",
+      "observed_items": [],
+      "decision": null,
+      "checks": [
+        {
+          "key": "image_quality",
+          "verdict": "uncertain",
+          "confidence": 0.0,
+          "detail": "VLM error: Gemini API error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 8h34m6.291346708s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-3.8-flash'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '30846s'}]}} (retried, 3 attempts)"
+        }
+      ],
+      "evidence_record_id": "PCK-0F12674D51C4",
+      "content_hash": "49d346fdcba7530b9147e3491a4e8ac289091b45e809991e9c0b47cf43bf62a3"
+    }
+  ]
+}

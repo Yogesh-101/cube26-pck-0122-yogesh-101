@@ -1,0 +1,52 @@
+[
+  {
+    "sku": "SKU-BOTTLE-750",
+    "name": "Water Bottle 750ml",
+    "description": "Stainless steel reusable water bottle, approximately 750ml, typically blue or silver"
+  },
+  {
+    "sku": "SKU-CABLE-USBC",
+    "name": "USB-C Charging Cable",
+    "description": "Black USB-C to USB-A charging cable, about 1 meter"
+  },
+  {
+    "sku": "SKU-CANDLE-3",
+    "name": "Scented Candle",
+    "description": "Jar candle with lid, wax candle in glass jar"
+  },
+  {
+    "sku": "SKU-MUG-11",
+    "name": "Ceramic Mug 11oz",
+    "description": "Ceramic coffee mug, approximately 11 oz"
+  },
+  {
+    "sku": "SKU-TOWEL-BLU",
+    "name": "Blue Bath Towel",
+    "description": "Folded blue cotton bath towel"
+  },
+  {
+    "sku": "SKU-LAMP-LED",
+    "name": "LED Desk Lamp",
+    "description": "Small LED desk or reading lamp"
+  },
+  {
+    "sku": "SKU-LEASH-6FT",
+    "name": "Dog Leash 6ft",
+    "description": "Six-foot pet leash, nylon webbing with clip"
+  },
+  {
+    "sku": "SKU-PUZZLE-500",
+    "name": "500-Piece Puzzle",
+    "description": "Boxed jigsaw puzzle, 500 pieces"
+  },
+  {
+    "sku": "SKU-SERUM-30",
+    "name": "Face Serum 30ml",
+    "description": "Small dropper bottle of facial serum, about 30ml"
+  },
+  {
+    "sku": "SKU-PROT-1KG",
+    "name": "Protein Powder 1kg",
+    "description": "Tub or pouch of protein powder, approximately 1kg"
+  }
+]
