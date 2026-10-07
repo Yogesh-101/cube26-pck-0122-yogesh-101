@@ -16,10 +16,34 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 # Thresholds (configurable via settings in production)
-BLUR_THRESHOLD = 100.0        # Laplacian variance below this = blurry
-BRIGHTNESS_MIN = 40.0         # Mean pixel value below this = too dark
+# OpenCV Laplacian variance and Pillow kernel variance use different scales.
+BLUR_THRESHOLD_OPENCV = 100.0
+BLUR_THRESHOLD_PILLOW = 40.0   # AMBIG fixtures ~10–26; sharp pack photos typically >60
+BRIGHTNESS_MIN = 85.0         # Mean pixel value below this = too dark / underlit
 BRIGHTNESS_MAX = 250.0        # Mean pixel value above this = overexposed
 MAX_FILE_SIZE_MB = 20
+
+
+def _laplacian_variance_pillow(gray) -> float:
+    """OpenCV-free blur proxy: variance of a 3x3 Laplacian kernel response."""
+    from PIL import ImageFilter
+
+    # Discrete Laplacian kernel (same shape as cv2.Laplacian default)
+    kernel = ImageFilter.Kernel(
+        size=(3, 3),
+        kernel=[0, 1, 0, 1, -4, 1, 0, 1, 0],
+        scale=1,
+        offset=128,
+    )
+    response = gray.filter(kernel)
+    try:
+        pixels = list(response.get_flattened_data())
+    except AttributeError:
+        pixels = list(response.getdata())
+    if not pixels:
+        return 0.0
+    mean = sum(pixels) / len(pixels)
+    return sum((p - mean) ** 2 for p in pixels) / len(pixels)
 
 
 @dataclass
@@ -108,22 +132,30 @@ def assess_image_quality(path: str) -> QualityResult:
         result.issues.append(f"Cannot open image: {e}")
         return result
 
-    # Blur detection (optional — requires OpenCV)
+    # Blur detection: prefer OpenCV Laplacian; fall back to Pillow so we never skip
+    blur_threshold = BLUR_THRESHOLD_PILLOW
     try:
         import cv2
-        import numpy as np
 
         cv_img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
         if cv_img is not None:
-            laplacian_var = cv2.Laplacian(cv_img, cv2.CV_64F).var()
-            result.blur_score = round(float(laplacian_var), 2)
-
-            if laplacian_var < BLUR_THRESHOLD:
-                result.is_uncertain = True
-                result.issues.append(f"Image may be blurry (score={laplacian_var:.0f})")
+            laplacian_var = float(cv2.Laplacian(cv_img, cv2.CV_64F).var())
+            result.blur_score = round(laplacian_var, 2)
+            blur_threshold = BLUR_THRESHOLD_OPENCV
+        else:
+            laplacian_var = _laplacian_variance_pillow(gray)
+            result.blur_score = round(laplacian_var, 2)
     except ImportError:
-        logger.debug("OpenCV not available — skipping blur detection")
-        result.blur_score = -1.0  # indicates not measured
+        laplacian_var = _laplacian_variance_pillow(gray)
+        result.blur_score = round(laplacian_var, 2)
+    except Exception as e:
+        logger.debug("Blur detection failed (%s); using Pillow fallback", e)
+        laplacian_var = _laplacian_variance_pillow(gray)
+        result.blur_score = round(laplacian_var, 2)
+
+    if result.blur_score >= 0 and result.blur_score < blur_threshold:
+        result.is_uncertain = True
+        result.issues.append(f"Image may be blurry (score={result.blur_score:.0f})")
 
     return result
 

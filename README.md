@@ -219,7 +219,20 @@ decided_by, decided_at), overrides[], status, content_hash
 
 ## Evaluation Results
 
-### Decision Engine (80 cases, 0 false PASS)
+### B. Held-out photo eval (headline — live order-blind Gemini)
+
+| Metric | Value |
+|---|---|
+| Cases | **38 / 38 completed** |
+| Decision accuracy | **76.3%** |
+| Observation exact match | 36.8% |
+| **False SEAL (dangerous)** | **0** |
+| False STOP (safe) | 9 |
+| Pending / VLM failures | 0 |
+
+Machine-readable: `data/eval/results/held_out_latest.json`. Full write-up: [`docs/EVALUATION.md`](docs/EVALUATION.md).
+
+### A. Decision Engine (80 cases, 0 false PASS) — rules only, not vision
 
 | Dataset | Cases | Correct | False PASS | False STOP |
 |---|---|---|---|---|

@@ -1,14 +1,14 @@
 {
   "summary": {
     "dataset_id": "pck-held-out-v1",
-    "started_at": "2026-10-07T15:39:58.086936+00:00",
-    "finished_at": "2026-10-07T15:40:36.051467+00:00",
+    "started_at": "2026-10-07T15:35:29.655443+00:00",
+    "finished_at": "2026-10-07T15:37:27.354376+00:00",
     "n_cases": 38,
-    "decision_accuracy": 0.7632,
+    "decision_accuracy": 0.7368,
     "observation_exact_match": 0.3684,
-    "false_seal": 0,
+    "false_seal": 1,
     "false_stop": 9,
-    "uncertain_check_cases": 5,
+    "uncertain_check_cases": 1,
     "pending_failures": 0,
     "errors": 0,
     "order_blind": true,
@@ -16,8 +16,8 @@
     "per_scenario": {
       "ambiguous_photos": {
         "total": 4,
-        "decision_correct": 4,
-        "decision_accuracy": 1.0,
+        "decision_correct": 3,
+        "decision_accuracy": 0.75,
         "observation_exact": 1
       },
       "correct_order": {
@@ -2569,25 +2569,25 @@
       ],
       "expected_decision": "stop_and_fix",
       "mode": "live_gemini_order_blind",
-      "latency_ms": 4011.7,
-      "status": "pending_review",
+      "latency_ms": 4812.8,
+      "status": "completed",
       "model_version": "gemini-flash-lite-latest",
       "observed_items": [
         {
           "sku": "SKU-BOTTLE-750",
           "name": "Water Bottle 750ml",
           "observed_quantity": 1,
-          "confidence": 0.9,
-          "observation_text": "A single water bottle visible inside the package."
+          "confidence": 0.85,
+          "observation_text": "A reusable water bottle is visible inside the package."
         }
       ],
-      "decision": "stop_and_fix",
+      "decision": "seal",
       "checks": [
         {
           "key": "image_quality",
-          "verdict": "uncertain",
-          "confidence": 0.5,
-          "detail": "Image quality is ambiguous \u2014 may affect identification reliability"
+          "verdict": "pass",
+          "confidence": 1.0,
+          "detail": "Image quality sufficient for verification"
         },
         {
           "key": "items_present",
@@ -2614,9 +2614,9 @@
           "detail": "No wrong-item substitution detected"
         }
       ],
-      "evidence_record_id": "PCK-B092078B7EFB",
-      "content_hash": "1162f48a2c9d2552bf966105fff7dbb5d0e8eeaff04741957a39120583bc2bb4",
-      "decision_match": true
+      "evidence_record_id": "PCK-C6E489BBD630",
+      "content_hash": "07b84cdcd9d24815d07a91c02883cff2761fb808d174edea73e20a46162e7137",
+      "decision_match": false
     },
     {
       "case_id": "HO-AMBIG-02",
@@ -2638,7 +2638,7 @@
       ],
       "expected_decision": "stop_and_fix",
       "mode": "live_gemini_order_blind",
-      "latency_ms": 2393.7,
+      "latency_ms": 5549.3,
       "status": "completed",
       "model_version": "gemini-flash-lite-latest",
       "observed_items": [],
@@ -2646,9 +2646,9 @@
       "checks": [
         {
           "key": "image_quality",
-          "verdict": "uncertain",
-          "confidence": 0.5,
-          "detail": "Image quality is ambiguous \u2014 may affect identification reliability"
+          "verdict": "fail",
+          "confidence": 0.9,
+          "detail": "Image quality insufficient for reliable verification"
         },
         {
           "key": "items_present",
@@ -2675,8 +2675,8 @@
           "detail": "No wrong-item substitution detected"
         }
       ],
-      "evidence_record_id": "PCK-59A0E6D1BEE4",
-      "content_hash": "fd4c950ad242c340aef7fbd8fed927089cdbbf730d30ac83f188442cfb70942d",
+      "evidence_record_id": "PCK-A90EC76C492D",
+      "content_hash": "b34ea2a4bcd75a679d1a432713b80f399384cf7c57c2b27f29928556cec1480a",
       "decision_match": true
     },
     {
@@ -2699,7 +2699,7 @@
       ],
       "expected_decision": "stop_and_fix",
       "mode": "live_gemini_order_blind",
-      "latency_ms": 3105.0,
+      "latency_ms": 3932.4,
       "status": "completed",
       "model_version": "gemini-flash-lite-latest",
       "observed_items": [],
@@ -2707,9 +2707,9 @@
       "checks": [
         {
           "key": "image_quality",
-          "verdict": "uncertain",
-          "confidence": 0.5,
-          "detail": "Image quality is ambiguous \u2014 may affect identification reliability"
+          "verdict": "fail",
+          "confidence": 0.9,
+          "detail": "Image quality insufficient for reliable verification"
         },
         {
           "key": "items_present",
@@ -2736,8 +2736,8 @@
           "detail": "No wrong-item substitution detected"
         }
       ],
-      "evidence_record_id": "PCK-3743A57E84AF",
-      "content_hash": "67eb77bf08ad794fa7f9e5c6832e023d456f17558f68aec515a97977ea7ffda2",
+      "evidence_record_id": "PCK-5F0D853DA8F0",
+      "content_hash": "2bdfbea17814aa0294f58166946d7b2089899134d1b7feae7933fa25ddf45378",
       "decision_match": true
     },
     {
@@ -2760,7 +2760,7 @@
       ],
       "expected_decision": "stop_and_fix",
       "mode": "live_gemini_order_blind",
-      "latency_ms": 4450.1,
+      "latency_ms": 4881.4,
       "status": "completed",
       "model_version": "gemini-flash-lite-latest",
       "observed_items": [],
@@ -2768,9 +2768,9 @@
       "checks": [
         {
           "key": "image_quality",
-          "verdict": "uncertain",
-          "confidence": 0.5,
-          "detail": "Image quality is ambiguous \u2014 may affect identification reliability"
+          "verdict": "fail",
+          "confidence": 0.9,
+          "detail": "Image quality insufficient for reliable verification"
         },
         {
           "key": "items_present",
@@ -2797,8 +2797,8 @@
           "detail": "No wrong-item substitution detected"
         }
       ],
-      "evidence_record_id": "PCK-16439DC6BE79",
-      "content_hash": "6a047b1cfd899b5b7ac83bed65aeeef0e2ed2efc7bcb2d2fd12171ea8b0a9889",
+      "evidence_record_id": "PCK-488ECEB05CC8",
+      "content_hash": "94dda56886f52a7b35235ffcf85c8c86179e61b2bbe62828383ebf522c68c4cb",
       "decision_match": true
     }
   ]

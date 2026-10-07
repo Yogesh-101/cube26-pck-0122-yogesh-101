@@ -82,6 +82,11 @@ def main() -> int:
     parser.add_argument("--model", default="", help="Override GEMINI_MODEL for this run")
     parser.add_argument("--sleep", type=float, default=13.0, help="Seconds between live calls (free-tier RPM)")
     parser.add_argument("--resume", action="store_true", help="Skip cases already completed in held_out_latest.json")
+    parser.add_argument(
+        "--only",
+        default="",
+        help="Comma-separated case_ids to (re)run; drops those ids from any resumed prior records",
+    )
     args = parser.parse_args()
 
     if args.model:
@@ -97,6 +102,12 @@ def main() -> int:
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     catalogue = load_catalogue()
     cases = manifest["cases"]
+    only_ids = {c.strip() for c in args.only.split(",") if c.strip()}
+    if only_ids:
+        cases = [c for c in cases if c["case_id"] in only_ids]
+        missing = only_ids - {c["case_id"] for c in cases}
+        if missing:
+            print(f"WARNING: unknown --only ids: {sorted(missing)}", file=sys.stderr)
     if args.limit:
         cases = cases[: args.limit]
 
@@ -105,6 +116,8 @@ def main() -> int:
     if args.resume and (RESULTS_DIR / "held_out_latest.json").exists():
         prior = json.loads((RESULTS_DIR / "held_out_latest.json").read_text(encoding="utf-8"))
         for rec in prior.get("records", []):
+            if only_ids and rec["case_id"] in only_ids:
+                continue  # force re-run of selected cases
             if rec.get("decision") and rec.get("status") not in ("pending", None) and not rec.get("error"):
                 completed_ids.add(rec["case_id"])
                 prior_records.append(rec)

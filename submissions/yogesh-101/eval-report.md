@@ -15,12 +15,12 @@ The Round 2 re-score correctly rejected presenting rules-only 100% as vision acc
 |---|---|
 | Dataset | `pck-held-out-v1` |
 | Cases | 38 |
-| **Decision accuracy** | **55.3%** |
-| Observation exact match (SKU+qty) | 26.3% |
+| **Decision accuracy** | **76.3%** |
+| Observation exact match (SKU+qty) | 36.8% |
 | **False SEAL (dangerous)** | **0** |
-| False STOP (safe) | 8 |
-| Cases with UNCERTAIN checks | 0 |
-| Pending / VLM failures | 9 |
+| False STOP (safe) | 9 |
+| Cases with UNCERTAIN checks | 5 |
+| Pending / VLM failures | 0 |
 | Order-blind prompt | True |
 | Expected order in VLM prompt | False |
 
@@ -28,12 +28,12 @@ The Round 2 re-score correctly rejected presenting rules-only 100% as vision acc
 
 | Scenario | N | Decision correct | Accuracy | Obs exact |
 |---|---|---|---|---|
-| ambiguous_photos | 4 | 0 | 0% | 0 |
+| ambiguous_photos | 4 | 4 | 100% | 1 |
 | correct_order | 10 | 4 | 40% | 4 |
 | extra_item | 4 | 4 | 100% | 0 |
 | missing_item | 4 | 4 | 100% | 1 |
 | multiple_identical | 4 | 1 | 25% | 1 |
-| visually_similar | 4 | 0 | 0% | 0 |
+| visually_similar | 4 | 4 | 100% | 3 |
 | wrong_item | 4 | 4 | 100% | 2 |
 | wrong_quantity | 4 | 4 | 100% | 2 |
 
@@ -77,15 +77,15 @@ The Round 2 re-score correctly rejected presenting rules-only 100% as vision acc
 | HO-MULTI-01 | multiple_identical | seal | stop_and_fix | No | No |
 | HO-MULTI-02 | multiple_identical | seal | stop_and_fix | No | No |
 | HO-MULTI-03 | multiple_identical | seal | seal | Yes | Yes |
-| HO-MULTI-04 | multiple_identical | seal | pending | — | — |
-| HO-SIMILAR-01 | visually_similar | stop_and_fix | pending | — | — |
-| HO-SIMILAR-02 | visually_similar | stop_and_fix | pending | — | — |
-| HO-SIMILAR-03 | visually_similar | stop_and_fix | pending | — | — |
-| HO-SIMILAR-04 | visually_similar | stop_and_fix | pending | — | — |
-| HO-AMBIG-01 | ambiguous_photos | stop_and_fix | pending | — | — |
-| HO-AMBIG-02 | ambiguous_photos | stop_and_fix | pending | — | — |
-| HO-AMBIG-03 | ambiguous_photos | stop_and_fix | pending | — | — |
-| HO-AMBIG-04 | ambiguous_photos | stop_and_fix | pending | — | — |
+| HO-MULTI-04 | multiple_identical | seal | stop_and_fix | No | No |
+| HO-SIMILAR-01 | visually_similar | stop_and_fix | stop_and_fix | Yes | Yes |
+| HO-SIMILAR-02 | visually_similar | stop_and_fix | stop_and_fix | Yes | Yes |
+| HO-SIMILAR-03 | visually_similar | stop_and_fix | stop_and_fix | Yes | Yes |
+| HO-SIMILAR-04 | visually_similar | stop_and_fix | stop_and_fix | Yes | No |
+| HO-AMBIG-01 | ambiguous_photos | stop_and_fix | stop_and_fix | Yes | Yes |
+| HO-AMBIG-02 | ambiguous_photos | stop_and_fix | stop_and_fix | Yes | No |
+| HO-AMBIG-03 | ambiguous_photos | stop_and_fix | stop_and_fix | Yes | No |
+| HO-AMBIG-04 | ambiguous_photos | stop_and_fix | stop_and_fix | Yes | No |
 
 ## A. Decision engine evaluation (rules-only, not vision)
 

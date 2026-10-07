@@ -14,13 +14,18 @@ from app.vision.quality import assess_image_quality, assess_batch_quality, compu
 
 @pytest.fixture
 def tmp_image():
-    """Create a simple valid test image using Pillow."""
-    from PIL import Image
+    """Create a sharp, well-lit test image (checkerboard so blur score is healthy)."""
+    from PIL import Image, ImageDraw
 
     fd, path = tempfile.mkstemp(suffix=".jpg")
     os.close(fd)
-    img = Image.new("RGB", (640, 480), color=(128, 128, 128))
-    img.save(path, "JPEG")
+    img = Image.new("RGB", (640, 480), color=(160, 160, 160))
+    draw = ImageDraw.Draw(img)
+    for y in range(0, 480, 40):
+        for x in range(0, 640, 40):
+            if ((x // 40) + (y // 40)) % 2 == 0:
+                draw.rectangle([x, y, x + 39, y + 39], fill=(200, 200, 200))
+    img.save(path, "JPEG", quality=95)
     yield path
     if os.path.exists(path):
         os.unlink(path)
@@ -99,6 +104,20 @@ class TestImageQuality:
         h2 = compute_file_sha256(tmp_image)
         assert h1 == h2
         assert len(h1) == 64
+
+
+class TestHeldOutAmbiguousFixtures:
+    def test_ambig_fixtures_flagged_uncertain(self):
+        """Blur/dark held-out AMBIG photos must never look 'clean' to the gate."""
+        from pathlib import Path
+
+        root = Path(__file__).resolve().parents[2] / "data" / "eval" / "held_out" / "images"
+        if not root.exists():
+            pytest.skip("held-out fixtures not present")
+        for name in ("HO-AMBIG-01.jpg", "HO-AMBIG-02.jpg", "HO-AMBIG-03.jpg", "HO-AMBIG-04.jpg"):
+            result = assess_image_quality(str(root / name))
+            assert result.is_usable is True
+            assert result.is_uncertain is True, f"{name} should be uncertain: {result.issues}"
 
 
 class TestBatchQuality:

@@ -58,7 +58,7 @@ def run_inspection(
     now = datetime.now(timezone.utc)
 
     # Step 1: Image quality gate
-    quality_results, quality_ok, quality_uncertain = assess_batch_quality(image_paths)
+    quality_results, _quality_all_ok, quality_uncertain = assess_batch_quality(image_paths)
 
     usable_paths = [r.path for r in quality_results if r.is_usable]
     image_inputs = [
@@ -101,15 +101,14 @@ def run_inspection(
         )
 
     # Step 3: Decision engine
-    # Combine VLM image quality assessment with our deterministic assessment
-    combined_quality_ok = quality_ok and vlm_result.image_quality_ok
-    combined_quality_uncertain = quality_uncertain or (not vlm_result.image_quality_ok)
-
+    # Soft quality problems (dark/blur / VLM says insufficient) → UNCERTAIN, never SEAL.
+    # Hard unusable images already returned pending above.
+    soft_quality_uncertain = quality_uncertain or (not vlm_result.image_quality_ok)
     decision_result = run_decision_engine(
         expected_lines=order.lines,
         observed_items=vlm_result.observed_items,
-        image_quality_ok=combined_quality_ok,
-        image_quality_uncertain=combined_quality_uncertain and combined_quality_ok,
+        image_quality_ok=True,
+        image_quality_uncertain=soft_quality_uncertain,
         model_version=vlm_result.model_version,
         latency_ms=vlm_result.latency_ms,
     )
