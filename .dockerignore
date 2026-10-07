@@ -4,5 +4,8 @@ __pycache__
 .git
 .pytest_cache
 *.db
-storage/images/*
+*.db-wal
+*.db-shm
+storage/**
+!storage/images/.gitkeep
 .cursor

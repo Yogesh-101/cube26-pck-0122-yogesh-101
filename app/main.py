@@ -34,15 +34,25 @@ TEMPLATE_DIR = Path(__file__).parent / "templates"
 TEMPLATE_DIR.mkdir(exist_ok=True)
 templates = Jinja2Templates(directory=str(TEMPLATE_DIR))
 
-# Ensure durable storage (DB + images) exists before serving traffic
+# Durable storage (DB + photos + JSONL mirror) — must live on a mounted volume
+# in production so restarts / code updates / redeploys never wipe inspections.
 settings = get_settings()
 Path(settings.storage_root).mkdir(parents=True, exist_ok=True)
 Path(settings.image_storage_path).mkdir(parents=True, exist_ok=True)
 Path(settings.database_path).expanduser().resolve().parent.mkdir(parents=True, exist_ok=True)
 
-from app.storage.database import init_database  # noqa: E402
+from app.storage.database import init_database, count_inspections  # noqa: E402
+from app.storage.durable import recover_missing_into_db, write_storage_marker  # noqa: E402
 
 init_database()
+write_storage_marker()
+restored = recover_missing_into_db()
+logging.getLogger(__name__).info(
+    "Durable storage ready at %s (inspections=%s, recovered_from_mirror=%s)",
+    Path(settings.storage_root).resolve(),
+    count_inspections(),
+    restored,
+)
 
 
 @app.get("/", response_class=HTMLResponse)

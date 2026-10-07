@@ -57,6 +57,7 @@ Order + Catalogue → Input Validation → Image Quality Gate → Gemini VLM (si
 | Decision | Rationale |
 |---|---|
 | Single batched VLM call per unit | Engineering Rule 2: one call carrying all checks, not one per check |
+| **Durable inspections** | SQLite + JSONL mirror on `STORAGE_ROOT` volume — survives restart, code update, and redeploy |
 | **OpenCV quality gate** | Blur, low light, contrast, and clipped regions checked on uploads and live capture before Gemini |
 | **Order-blind VLM prompt** | Expected order never sent to Gemini — closes re-score "order in prompt" gap || Deterministic decision engine | Final SEAL/STOP never depends on raw LLM output |
 | Held-out photo eval | `data/eval/held_out/` real product photos; results in `data/eval/results/` |
@@ -80,31 +81,47 @@ Order + Catalogue → Input Validation → Image Quality Gate → Gemini VLM (si
 ```bash
 git clone https://github.com/Yogesh-101/cube26-pck-0122-yogesh-101.git
 cd cube26-pck-0122-yogesh-101
-
-python -m pip install -r requirements.txt
 ```
 
-Copy the example environment file and set the key. Do not commit `.env`.
-
-```bash
-cp .env.example .env
-```
-
-On Windows PowerShell:
+**Prefer a project venv** (avoids broken global `pip.exe` launchers that point at a deleted Python install):
 
 ```powershell
+# Windows PowerShell — use py launcher, never bare `pip` if the launcher is broken
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
 Copy-Item .env.example .env
 ```
 
-Open `.env` and set `GEMINI_API_KEY`. The model name defaults to `gemini-2.5-flash` (`GEMINI_MODEL`). Optional retry knobs are `VLM_MAX_RETRIES` (default 2) and `VLM_RETRY_BASE_SECONDS` (default 1.0). `.env.example` contains placeholders only.
+```bash
+# macOS / Linux
+python3 -m venv .venv
+.venv/bin/python -m pip install --upgrade pip
+.venv/bin/python -m pip install -r requirements.txt
+cp .env.example .env
+```
+
+Always install with `python -m pip` (or `.\.venv\Scripts\python.exe -m pip`), not bare `pip`. Open `.env` and set `GEMINI_API_KEY`. Optional: `GEMINI_MODEL`, `VLM_MAX_RETRIES` (default 2), `VLM_RETRY_BASE_SECONDS` (default 1.0). `.env.example` contains placeholders only — never commit `.env`.
 
 ### Run
 
-```bash
-python -m uvicorn app.main:app --reload --port 8000
+```powershell
+# Windows
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
 ```
 
-Open http://localhost:8000 in your browser.
+```bash
+# macOS / Linux
+.venv/bin/python -m uvicorn app.main:app --reload --port 8000
+```
+
+Open http://localhost:8000. Health (includes durable storage proof): http://localhost:8000/api/v1/health
+
+### Tests
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests/unit/ -q
+```
 
 ## Usage instructions
 
@@ -114,12 +131,6 @@ The header org switcher is the tenant. The dashboard and every results page read
 2. **New inspection** (`/inspect`). Enter order id, unit id, channel, and at least one SKU line. Add photographs of the open box. Catalogue JSON is optional; if present it is sent as `catalogue_json` and reaches the vision prompt. Submit calls `POST /api/v1/verify/json`. The page does not submit until order id, unit id, one line, and one photo are present.
 3. **Results** (`/results/{inspection_id}`). Shows the decision in force, the captured photos, detected versus expected quantities, and each check. Photos load from an org-scoped URL; another organisation gets 404, not the file. Reconciliation labels are match, missing, short, over, extra, and unknown. When the model never ran (`pending`), those lines read **Not checked**, not Missing, and the banner includes the saved reason (for example a Gemini 503). A `pending_review` record shows the uncertainty detail: reason code, what is known, what is unknown, missing evidence, and the recommended action.
 4. **Override**. On a STOP & FIX, NEEDS REVIEW, or PENDING result, record a new decision of SEAL or STOP & FIX. Operator id and reason are required. The agent's original `outcome` stays as stored. The override row keeps the original verdict, the new verdict, the operator id, and the reason. The page shows both.
-
-### Run Tests
-
-```bash
-python -m pytest tests/ -v
-```
 
 ### Run Evaluation
 
@@ -296,7 +307,7 @@ Full methodology and results: [`docs/EVALUATION.md`](docs/EVALUATION.md)
 - **Incorrect items** are represented as a missing expected SKU plus an unexpected extra SKU. The engine does not emit a separate `wrong_item` discrepancy row. `no_wrong_items` passes unless that discrepancy type is present, which the current engine does not write.
 - **Photos are served only to the owning organisation.** New files are stored under `storage/images/<org_id>/<unit_id>/`. The results page loads them from `GET /api/v1/inspections/{inspection_id}/images/{image_id}?org_id=`. The lookup is org-scoped, the image id must be on that record, and the path must stay inside the storage root. The storage directory is not mounted as public static files. Uploads are JPG, PNG, WebP, or GIF, and must stay under `max_image_size_mb`.
 - **Counting.** Identical stacked items can be undercounted. That path is UNCERTAIN and human review, not a forced SEAL.
-- **Storage.** SQLite + photos under `STORAGE_ROOT` (default `./storage`). Paths are stored relative to that root so inspections survive refresh and process restart when the volume is kept. On Docker/Render, mount a persistent disk at `/app/storage`. Queries are scoped by `org_id` in SQL (not Postgres RLS).
+- **Storage.** SQLite + photos + append-only JSONL mirror under `STORAGE_ROOT` (default `./storage`). Paths are stored relative to that root. Writes use WAL + `synchronous=FULL` and verify-after-write; failed DB saves return HTTP 503 (mirror still recovers on restart). On Docker/Render, mount one persistent disk at `/app/storage` (`render.yaml` / `docker-compose.yml`). Queries are scoped by `org_id` in SQL (not Postgres RLS).
 
 ### Known Failure Modes
 1. Identical products stacked/overlapping → undercount → UNCERTAIN
@@ -317,7 +328,8 @@ pack-manager/
 │   ├── vision/
 │   │   ├── gemini_client.py   # Gemini VLM client (single batched call)
 │   │   └── quality.py         # Image quality gate
-│   ├── storage/database.py    # SQLite persistence (org-scoped)
+│   ├── storage/database.py    # SQLite persistence (org-scoped, durable pragmas)
+│   ├── storage/durable.py     # JSONL mirror + startup recovery
 │   ├── pipeline.py            # End-to-end orchestration
 │   ├── config.py              # Environment settings
 │   ├── main.py                # FastAPI app

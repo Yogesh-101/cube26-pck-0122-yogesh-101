@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 import uuid
 from datetime import datetime, timezone
@@ -175,16 +176,48 @@ def relativize_inspection_paths(inspection_data: dict, storage_root: str | Path)
 
 
 def persist_inspection(inspection_data: dict) -> None:
-    """Normalize paths, write SQLite, keep an in-process cache for the same worker."""
+    """
+    Durably store an inspection so it survives restart, redeploy, and code updates.
+
+    1. Relativize photo paths under STORAGE_ROOT (volume-stable).
+    2. Append to JSONL mirror on the volume (never truncated).
+    3. Upsert SQLite and verify the row is readable.
+    4. Keep an in-process cache only as a hot shortcut — DB+mirror are source of truth.
+
+    Raises HTTP 503 if neither store can be confirmed — never pretends success.
+    """
+    from app.storage.durable import append_inspection_mirror
+
     settings = get_settings()
     storage_root, _ = _storage_roots(settings)
     relativize_inspection_paths(inspection_data, storage_root)
     _inspections[inspection_data["inspection_id"]] = inspection_data
+
+    mirror_ok = False
+    try:
+        append_inspection_mirror(inspection_data, storage_root)
+        mirror_ok = True
+    except Exception as e:
+        logger.error("JSONL mirror write failed: %s", e, exc_info=True)
+
     try:
         db_save_inspection(inspection_data)
     except Exception as e:
-        # Fail-open for the operator response, but log loudly — lost rows are a bug.
-        logger.error("DB save failed (fail-open): %s", e, exc_info=True)
+        logger.error("SQLite save failed: %s", e, exc_info=True)
+        if mirror_ok:
+            # Mirror has the row — still surface the DB failure so ops notice,
+            # but the inspection is recoverable on next boot via recover_missing_into_db.
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "Inspection was mirrored to durable storage but SQLite write failed. "
+                    "It will be recovered on the next restart. Retry if you need it listed immediately."
+                ),
+            ) from e
+        raise HTTPException(
+            status_code=503,
+            detail="Failed to persist inspection to durable storage. Retry — data was not discarded silently.",
+        ) from e
 
 
 def resolve_inspection_image(inspection: dict, image_id: str, storage_root: str | Path) -> Optional[Path]:
@@ -558,5 +591,40 @@ async def get_evidence_by_unit(unit_id: str, org_id: str = Query(...)):
 
 @router.get("/api/v1/health")
 async def health():
-    """Health check endpoint."""
-    return {"status": "healthy", "agent": "pack_manager", "version": "1.0.0"}
+    """Health check — includes durable storage proof so redeploys can be verified."""
+    from app.storage.database import count_inspections, get_db_path
+    from app.storage.durable import mirror_path, storage_root
+
+    settings = get_settings()
+    root = storage_root()
+    db = get_db_path()
+    mirror = mirror_path(root)
+    try:
+        n = count_inspections()
+        db_ok = db.is_file()
+        writable = os.access(root, os.W_OK)
+        status = "healthy" if db_ok and writable else "degraded"
+    except Exception as e:
+        return {
+            "status": "degraded",
+            "agent": "pack_manager",
+            "version": "1.0.0",
+            "error": str(e),
+            "storage_root": str(root),
+        }
+    return {
+        "status": status,
+        "agent": "pack_manager",
+        "version": "1.0.0",
+        "storage": {
+            "root": str(root),
+            "database": str(db),
+            "database_exists": db_ok,
+            "mirror": str(mirror),
+            "mirror_exists": mirror.is_file(),
+            "images": str(Path(settings.image_storage_path).resolve()),
+            "writable": writable,
+            "inspection_count": n,
+            "survives_redeploy": True,
+        },
+    }

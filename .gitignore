@@ -8,8 +8,14 @@ __pycache__/
 venv/
 .DS_Store
 *.db
+*.db-wal
+*.db-shm
 storage/images/*
 !storage/images/.gitkeep
+# Durable volume artefacts stay local / on the mounted disk — never commit real customer data
+storage/pack_manager.db
+storage/inspections_mirror.jsonl
+storage/.durable_volume
 .pytest_cache/
 .cursor/
 
