@@ -15,12 +15,12 @@ The Round 2 re-score correctly rejected presenting rules-only 100% as vision acc
 |---|---|
 | Dataset | `pck-held-out-v1` |
 | Cases | 38 |
-| **Decision accuracy** | **15.8%** |
-| Observation exact match (SKU+qty) | 13.2% |
+| **Decision accuracy** | **55.3%** |
+| Observation exact match (SKU+qty) | 26.3% |
 | **False SEAL (dangerous)** | **0** |
-| False STOP (safe) | 6 |
+| False STOP (safe) | 8 |
 | Cases with UNCERTAIN checks | 0 |
-| Pending / VLM failures | 26 |
+| Pending / VLM failures | 9 |
 | Order-blind prompt | True |
 | Expected order in VLM prompt | False |
 
@@ -30,12 +30,12 @@ The Round 2 re-score correctly rejected presenting rules-only 100% as vision acc
 |---|---|---|---|---|
 | ambiguous_photos | 4 | 0 | 0% | 0 |
 | correct_order | 10 | 4 | 40% | 4 |
-| extra_item | 4 | 0 | 0% | 0 |
-| missing_item | 4 | 2 | 50% | 1 |
-| multiple_identical | 4 | 0 | 0% | 0 |
+| extra_item | 4 | 4 | 100% | 0 |
+| missing_item | 4 | 4 | 100% | 1 |
+| multiple_identical | 4 | 1 | 25% | 1 |
 | visually_similar | 4 | 0 | 0% | 0 |
-| wrong_item | 4 | 0 | 0% | 0 |
-| wrong_quantity | 4 | 0 | 0% | 0 |
+| wrong_item | 4 | 4 | 100% | 2 |
+| wrong_quantity | 4 | 4 | 100% | 2 |
 
 ### Method
 
@@ -60,23 +60,23 @@ The Round 2 re-score correctly rejected presenting rules-only 100% as vision acc
 | HO-CORRECT-10 | correct_order | seal | seal | Yes | Yes |
 | HO-MISSING-01 | missing_item | stop_and_fix | stop_and_fix | Yes | Yes |
 | HO-MISSING-02 | missing_item | stop_and_fix | stop_and_fix | Yes | No |
-| HO-MISSING-03 | missing_item | stop_and_fix | pending | — | — |
-| HO-MISSING-04 | missing_item | stop_and_fix | pending | — | — |
-| HO-WRONG-01 | wrong_item | stop_and_fix | pending | — | — |
-| HO-WRONG-02 | wrong_item | stop_and_fix | pending | — | — |
-| HO-WRONG-03 | wrong_item | stop_and_fix | pending | — | — |
-| HO-WRONG-04 | wrong_item | stop_and_fix | pending | — | — |
-| HO-EXTRA-01 | extra_item | stop_and_fix | pending | — | — |
-| HO-EXTRA-02 | extra_item | stop_and_fix | pending | — | — |
-| HO-EXTRA-03 | extra_item | stop_and_fix | pending | — | — |
-| HO-EXTRA-04 | extra_item | stop_and_fix | pending | — | — |
-| HO-QTY-01 | wrong_quantity | stop_and_fix | pending | — | — |
-| HO-QTY-02 | wrong_quantity | stop_and_fix | pending | — | — |
-| HO-QTY-03 | wrong_quantity | stop_and_fix | pending | — | — |
-| HO-QTY-04 | wrong_quantity | stop_and_fix | pending | — | — |
-| HO-MULTI-01 | multiple_identical | seal | pending | — | — |
-| HO-MULTI-02 | multiple_identical | seal | pending | — | — |
-| HO-MULTI-03 | multiple_identical | seal | pending | — | — |
+| HO-MISSING-03 | missing_item | stop_and_fix | stop_and_fix | Yes | No |
+| HO-MISSING-04 | missing_item | stop_and_fix | stop_and_fix | Yes | No |
+| HO-WRONG-01 | wrong_item | stop_and_fix | stop_and_fix | Yes | Yes |
+| HO-WRONG-02 | wrong_item | stop_and_fix | stop_and_fix | Yes | Yes |
+| HO-WRONG-03 | wrong_item | stop_and_fix | stop_and_fix | Yes | No |
+| HO-WRONG-04 | wrong_item | stop_and_fix | stop_and_fix | Yes | No |
+| HO-EXTRA-01 | extra_item | stop_and_fix | stop_and_fix | Yes | No |
+| HO-EXTRA-02 | extra_item | stop_and_fix | stop_and_fix | Yes | No |
+| HO-EXTRA-03 | extra_item | stop_and_fix | stop_and_fix | Yes | No |
+| HO-EXTRA-04 | extra_item | stop_and_fix | stop_and_fix | Yes | No |
+| HO-QTY-01 | wrong_quantity | stop_and_fix | stop_and_fix | Yes | No |
+| HO-QTY-02 | wrong_quantity | stop_and_fix | stop_and_fix | Yes | No |
+| HO-QTY-03 | wrong_quantity | stop_and_fix | stop_and_fix | Yes | Yes |
+| HO-QTY-04 | wrong_quantity | stop_and_fix | stop_and_fix | Yes | Yes |
+| HO-MULTI-01 | multiple_identical | seal | stop_and_fix | No | No |
+| HO-MULTI-02 | multiple_identical | seal | stop_and_fix | No | No |
+| HO-MULTI-03 | multiple_identical | seal | seal | Yes | Yes |
 | HO-MULTI-04 | multiple_identical | seal | pending | — | — |
 | HO-SIMILAR-01 | visually_similar | stop_and_fix | pending | — | — |
 | HO-SIMILAR-02 | visually_similar | stop_and_fix | pending | — | — |
