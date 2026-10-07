@@ -18,7 +18,8 @@ This Round 2 Pack Manager is integrated into the Pod monorepo as:
 - [x] Deterministic decision engine; UNCERTAIN never auto-seals
 - [x] Quality gate (blur + underlit) blocks false SEAL on ambiguous photos
 - [x] Fail-open pending on VLM errors
-- [x] Durable SQLite + image storage under `STORAGE_ROOT`
+- [x] Durable SQLite + JSONL mirror under `STORAGE_ROOT` (survives restart/redeploy)
+- [x] OpenCV quality gate (blur / low light / contrast) — never auto-seals on bad photos
 - [x] Tenant isolation on inspections
 - [x] Honest A/B eval reporting (`docs/EVALUATION.md`)
 
