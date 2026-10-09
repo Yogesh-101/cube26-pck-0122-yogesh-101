@@ -331,6 +331,63 @@ def get_overrides(inspection_id: str, org_id: str, db_path: str | Path | None = 
         conn.close()
 
 
+def find_image_hash_owners(
+    org_id: str,
+    sha256_list: list[str],
+    *,
+    exclude_order_id: str | None = None,
+    db_path: str | Path | None = None,
+) -> dict[str, str]:
+    """
+    Map image SHA-256 → prior evidence/record id when the same bytes were
+    already used for a *different* order in this org (Rule 1: org-scoped).
+
+    Same photo for the same order is allowed (re-check). Cross-order reuse
+    feeds the photo_reuse decision check.
+    """
+    hashes = [h for h in sha256_list if h]
+    if not hashes:
+        return {}
+
+    path = Path(db_path) if db_path is not None else get_db_path()
+    conn = _get_connection(path)
+    try:
+        rows = conn.execute(
+            "SELECT order_id, images, evidence_record, inspection_id "
+            "FROM inspections WHERE org_id = ?",
+            (org_id,),
+        ).fetchall()
+
+        want = set(hashes)
+        found: dict[str, str] = {}
+        for row in rows:
+            prior_order = row["order_id"]
+            if exclude_order_id and prior_order == exclude_order_id:
+                continue
+            try:
+                images = json.loads(row["images"] or "[]")
+            except (json.JSONDecodeError, TypeError):
+                images = []
+            record_id = row["inspection_id"]
+            try:
+                evidence = json.loads(row["evidence_record"] or "{}")
+                if isinstance(evidence, dict) and evidence.get("record_id"):
+                    record_id = evidence["record_id"]
+            except (json.JSONDecodeError, TypeError):
+                pass
+            for img in images:
+                if not isinstance(img, dict):
+                    continue
+                sha = img.get("sha256")
+                if sha in want and sha not in found:
+                    found[sha] = record_id
+            if len(found) == len(want):
+                break
+        return found
+    finally:
+        conn.close()
+
+
 def _row_to_dict(row: sqlite3.Row) -> dict:
     """Convert a database row back to a full inspection dict."""
     data = dict(row)

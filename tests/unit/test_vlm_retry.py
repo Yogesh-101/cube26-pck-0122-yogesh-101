@@ -20,15 +20,28 @@ from app.vision.gemini_client import (
 )
 
 GOOD_RESPONSE = {
-    "observed_items": [
+    "objects": [
         {
+            "classification": "CANDIDATE",
             "sku": "SKU-BOTTLE-750",
-            "name": "Water Bottle 750ml",
+            "description": "Water Bottle 750ml",
             "observed_quantity": 1,
             "confidence": 0.9,
             "observation_text": "Blue steel bottle, label visible",
+            "box_2d": [100, 100, 800, 800],
+            "photo": 1,
+            "alternative_skus": [],
+            "deciding_feature": "blue steel bottle body",
+            "partially_hidden": False,
         }
     ],
+    "counts": [{"sku": "SKU-BOTTLE-750", "count": 1, "count_certain": True}],
+    "scene": {
+        "box_interior_fully_visible": True,
+        "items_may_be_hidden": False,
+        "visibility_confidence": 0.95,
+        "notes": "",
+    },
     "image_quality_assessment": {"is_sufficient": True, "issues": []},
     "overall_notes": "Single item, clearly visible",
 }

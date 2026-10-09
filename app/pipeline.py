@@ -1,10 +1,17 @@
 """
-PCK Pack Manager — Inspection Pipeline
+PCK Pack Manager — Inspection Pipeline (v2)
 
 End-to-end orchestration:
   Order + Images → Quality Gate → VLM → Decision Engine → Evidence Record
 
 Implements fail-open: VLM errors produce a pending record, never block the operator.
+
+v2 upgrades:
+  - Passes SceneCoverage from VLM result into decision engine
+  - Passes image SHA-256 hashes into decision engine for photo reuse detection
+  - Passes seen_hashes dict (from request context) for cross-order reuse check
+  - Propagates prompt_version from VLM result into model metadata
+  - Improved pending inspection to include reason on all checks (not just image_quality)
 """
 
 from __future__ import annotations
@@ -29,6 +36,7 @@ from app.domain.schemas import (
     Order,
     OrderLine,
     Outcome,
+    SceneCoverage,
     Verdict,
 )
 from app.vision.gemini_client import GeminiPackVerifier, VLMError, VerificationResult
@@ -41,17 +49,24 @@ def run_inspection(
     order: Order,
     image_paths: list[str],
     catalogue: list[CatalogueProduct] | None = None,
+    seen_hashes: dict[str, str] | None = None,
 ) -> Inspection:
     """
     Execute the full pack verification pipeline.
 
     1. Validate inputs (already done by Pydantic on Order construction)
     2. Assess image quality
-    3. Call VLM (single batched call)
-    4. Run decision engine
+    3. Call VLM (single batched call) — order-blind
+    4. Run decision engine (deterministic)
     5. Build evidence record
 
     On VLM failure: returns a pending inspection (fail-open).
+
+    Args:
+        order: The customer order to verify.
+        image_paths: Paths to package photographs on disk.
+        catalogue: Product catalogue for SKU grounding (optional).
+        seen_hashes: Mapping of image SHA-256 → prior record_id for reuse detection (optional).
     """
     settings = get_settings()
     catalogue = catalogue or []
@@ -61,6 +76,7 @@ def run_inspection(
     quality_results, _quality_all_ok, quality_uncertain = assess_batch_quality(image_paths)
 
     usable_paths = [r.path for r in quality_results if r.is_usable]
+    image_sha256_list = [r.sha256 for r in quality_results if r.sha256]
     image_inputs = [
         ImageInput(
             path=r.path,
@@ -79,7 +95,7 @@ def run_inspection(
         logger.warning(f"No usable images for order {order.order_id}")
         return _build_pending_inspection(
             order, image_inputs, catalogue,
-            reason="No usable images available",
+            reason="No usable images available after quality gate",
         )
 
     # Step 2: Call VLM
@@ -102,10 +118,15 @@ def run_inspection(
             reason=f"VLM error: {e}",
         )
 
-    # Step 3: Decision engine
+    # Step 3: Decision engine (v2: passes scene coverage + photo hashes)
     # Soft quality problems (dark/blur / VLM says insufficient) → UNCERTAIN, never SEAL.
     # Hard unusable images already returned pending above.
     soft_quality_uncertain = quality_uncertain or (not vlm_result.image_quality_ok)
+    ordered_skus = {line.sku for line in order.lines}
+    component_lookalike_skus: set[str] = set()
+    for product in catalogue:
+        if product.sku in ordered_skus:
+            component_lookalike_skus.update(product.component_lookalikes or [])
     decision_result = run_decision_engine(
         expected_lines=order.lines,
         observed_items=vlm_result.observed_items,
@@ -113,6 +134,10 @@ def run_inspection(
         image_quality_uncertain=soft_quality_uncertain,
         model_version=vlm_result.model_version,
         latency_ms=vlm_result.latency_ms,
+        scene=vlm_result.scene,                      # v2: scene coverage
+        image_sha256_list=image_sha256_list,          # v2: for reuse detection
+        seen_hashes=seen_hashes,                      # v2: cross-order reuse map
+        component_lookalike_skus=component_lookalike_skus,
     )
 
     # Step 4: Build evidence record
@@ -156,7 +181,8 @@ def run_inspection(
         f"decision={decision_result.decision.value} "
         f"status={decision_result.status.value} "
         f"checks={len(decision_result.checks)} "
-        f"latency={vlm_result.latency_ms:.0f}ms"
+        f"latency={vlm_result.latency_ms:.0f}ms "
+        f"prompt_version={vlm_result.prompt_version}"
     )
 
     return inspection
@@ -176,9 +202,6 @@ def _build_pending_inspection(
     """
     now = datetime.now(timezone.utc)
 
-    # The reason must live on the inspection itself. Persisting it only inside
-    # the evidence record leaves Inspection.checks empty, so the UI reports
-    # "Checks run 0" and cannot show why the verdict was withheld.
     pending_checks = [
         Check(
             check_key=CheckKey.IMAGE_QUALITY,

@@ -2,51 +2,73 @@
   {
     "sku": "SKU-BOTTLE-750",
     "name": "Water Bottle 750ml",
-    "description": "Stainless steel reusable water bottle, approximately 750ml, typically blue or silver"
+    "description": "Stainless steel reusable water bottle, approximately 750ml, typically blue or silver",
+    "confusable_with": [],
+    "component_lookalikes": []
   },
   {
     "sku": "SKU-CABLE-USBC",
     "name": "USB-C Charging Cable",
-    "description": "Black USB-C to USB-A charging cable, about 1 meter"
+    "description": "Black USB-C to USB-A charging cable, about 1 meter. Also ships as an accessory with SKU-LAMP-LED.",
+    "confusable_with": [],
+    "component_lookalikes": []
   },
   {
     "sku": "SKU-CANDLE-3",
-    "name": "Scented Candle",
-    "description": "Jar candle with lid, wax candle in glass jar"
+    "name": "Scented Candle Trio",
+    "description": "Set of 3 jar candles with lids; one sellable unit is the trio box",
+    "attributes": {"units_per_sellable": "3"},
+    "confusable_with": [],
+    "component_lookalikes": []
   },
   {
     "sku": "SKU-MUG-11",
-    "name": "Ceramic Mug 11oz",
-    "description": "Ceramic coffee mug, approximately 11 oz"
+    "name": "Ceramic Mug Set 11oz",
+    "description": "Set of 2 ceramic coffee mugs, approximately 11 oz each; one sellable unit is the pair",
+    "attributes": {"units_per_sellable": "2"},
+    "confusable_with": [],
+    "component_lookalikes": []
   },
   {
     "sku": "SKU-TOWEL-BLU",
     "name": "Blue Bath Towel",
-    "description": "Folded blue cotton bath towel"
+    "description": "Folded blue cotton bath towel",
+    "confusable_with": [],
+    "component_lookalikes": []
   },
   {
     "sku": "SKU-LAMP-LED",
     "name": "LED Desk Lamp",
-    "description": "Small LED desk or reading lamp"
+    "description": "Small LED desk or reading lamp that ships with a USB-C power cable in the box",
+    "confusable_with": [],
+    "component_lookalikes": ["SKU-CABLE-USBC"]
   },
   {
     "sku": "SKU-LEASH-6FT",
     "name": "Dog Leash 6ft",
-    "description": "Six-foot pet leash, nylon webbing with clip"
+    "description": "Six-foot pet leash, nylon webbing with clip",
+    "confusable_with": [],
+    "component_lookalikes": []
   },
   {
     "sku": "SKU-PUZZLE-500",
     "name": "500-Piece Puzzle",
-    "description": "Boxed jigsaw puzzle, 500 pieces"
+    "description": "Boxed jigsaw puzzle, 500 pieces",
+    "confusable_with": [],
+    "component_lookalikes": []
   },
   {
     "sku": "SKU-SERUM-30",
     "name": "Face Serum 30ml",
-    "description": "Small dropper bottle of facial serum, about 30ml"
+    "description": "Small dropper bottle of facial serum, about 30ml",
+    "confusable_with": [],
+    "component_lookalikes": []
   },
   {
     "sku": "SKU-PROT-1KG",
     "name": "Protein Powder 1kg",
-    "description": "Tub or pouch of protein powder, approximately 1kg"
+    "description": "Tub or pouch of protein powder, approximately 1kg",
+    "confusable_with": [],
+    "component_lookalikes": []
   }
 ]

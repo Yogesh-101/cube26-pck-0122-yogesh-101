@@ -23,4 +23,10 @@ def test_prompt_excludes_expected_order():
 
 def test_prompt_is_observation_not_verification():
     prompt = _build_prompt([])
-    assert "observation agent" in prompt.lower() or "Identify every distinct physical item" in prompt
+    lowered = prompt.lower()
+    assert (
+        "observation agent" in lowered
+        or "identify every distinct physical item" in lowered
+        or "list every distinct physical object" in lowered
+        or "report presence and count only" in lowered
+    )

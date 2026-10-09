@@ -6,11 +6,12 @@ This Round 2 Pack Manager is integrated into the Pod monorepo as:
 
 | | |
 |---|---|
-| Agent id | `pack-manager@1` |
+| Agent id | `pack-manager@2` |
 | Adapter | `agents/pack/app.py` → `handle(agent_input) -> agent_output` |
 | Runtime copy | `agents/pack/runtime/` (this repo) |
 | Decision | Pod `docs/decisions.md` **D-007** |
 | Held-out eval | 38/38 · **0 false SEAL** · 76.3% decision accuracy |
+| Prompt | `order-blind-v2` |
 
 ### Production checklist (this repo)
 
@@ -22,6 +23,12 @@ This Round 2 Pack Manager is integrated into the Pod monorepo as:
 - [x] OpenCV quality gate (blur / low light / contrast) — never auto-seals on bad photos
 - [x] Tenant isolation on inspections
 - [x] Honest A/B eval reporting (`docs/EVALUATION.md`)
+- [x] **v2** Object-level bounding boxes + deciding_feature / alternative_skus
+- [x] **v2** `scene_coverage` check (whole box visible / hidden items)
+- [x] **v2** `photo_reuse` check (SHA-256 cross-order reuse, org-scoped)
+- [x] **v2** UNCERTAIN → `pending_review` (never auto-seal)
+- [x] **v2.1** Occlusion-aware missing (poor scene → UNCERTAIN, not false STOP)
+- [x] **v2.1** `component_lookalikes` (included parts ≠ hard extra FAIL)
 
 ### Round 3 checklist (pod)
 

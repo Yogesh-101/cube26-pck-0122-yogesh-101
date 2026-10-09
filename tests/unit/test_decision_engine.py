@@ -21,6 +21,7 @@ from app.domain.schemas import (
     InspectionStatus,
     ObservedItem,
     OrderLine,
+    SceneCoverage,
     Verdict,
 )
 
@@ -326,4 +327,86 @@ class TestEdgeCases:
         )
         extra_check = get_check(result, CheckKey.NO_EXTRA_ITEMS)
         assert extra_check.verdict == Verdict.UNCERTAIN
+        assert result.status == InspectionStatus.PENDING_REVIEW
+
+
+# ---------------------------------------------------------------------------
+# v2 / competitive upgrades
+# ---------------------------------------------------------------------------
+
+class TestSceneCoverage:
+    def test_incomplete_scene_blocks_seal(self):
+        scene = SceneCoverage(
+            box_interior_fully_visible=False,
+            items_may_be_hidden=True,
+            visibility_confidence=0.4,
+            notes="Items stacked",
+        )
+        result = run_decision_engine(
+            expected_lines=make_order_lines(("SKU-001", 1)),
+            observed_items=make_observed(("SKU-001", "Black T-Shirt", 1, 0.95)),
+            scene=scene,
+        )
+        assert result.status == InspectionStatus.PENDING_REVIEW
+        scene_check = get_check(result, CheckKey.SCENE_COVERAGE)
+        assert scene_check is not None
+        assert scene_check.verdict == Verdict.UNCERTAIN
+
+    def test_missing_with_poor_scene_is_uncertain_not_fail(self):
+        """Occlusion-aware: hidden items must not become false STOP."""
+        scene = SceneCoverage(
+            box_interior_fully_visible=False,
+            items_may_be_hidden=True,
+            visibility_confidence=0.3,
+        )
+        result = run_decision_engine(
+            expected_lines=make_order_lines(("SKU-001", 1), ("SKU-002", 1)),
+            observed_items=make_observed(("SKU-001", "Black T-Shirt", 1, 0.95)),
+            scene=scene,
+        )
+        items_check = get_check(result, CheckKey.ITEMS_PRESENT)
+        assert items_check.verdict == Verdict.UNCERTAIN
+        assert result.status == InspectionStatus.PENDING_REVIEW
+        assert not any(d.discrepancy_type == "missing" for d in result.discrepancies)
+
+
+class TestPhotoReuse:
+    def test_reused_photo_is_uncertain(self):
+        result = run_decision_engine(
+            expected_lines=make_order_lines(("SKU-001", 1)),
+            observed_items=make_observed(("SKU-001", "Black T-Shirt", 1, 0.95)),
+            image_sha256_list=["abc123"],
+            seen_hashes={"abc123": "PCK-PRIOR"},
+        )
+        reuse = get_check(result, CheckKey.PHOTO_REUSE)
+        assert reuse is not None
+        assert reuse.verdict == Verdict.UNCERTAIN
+        assert result.status == InspectionStatus.PENDING_REVIEW
+
+    def test_fresh_photo_passes_reuse(self):
+        result = run_decision_engine(
+            expected_lines=make_order_lines(("SKU-001", 1)),
+            observed_items=make_observed(("SKU-001", "Black T-Shirt", 1, 0.95)),
+            image_sha256_list=["abc123"],
+            seen_hashes={},
+        )
+        reuse = get_check(result, CheckKey.PHOTO_REUSE)
+        assert reuse is not None
+        assert reuse.verdict == Verdict.PASS_
+        assert result.decision == Decision.SEAL
+
+
+class TestComponentLookalikes:
+    def test_component_extra_is_uncertain(self):
+        """Lamp ships with USB cable — seeing the cable SKU is not a hard FAIL."""
+        result = run_decision_engine(
+            expected_lines=make_order_lines(("SKU-LAMP-LED", 1)),
+            observed_items=make_observed(
+                ("SKU-LAMP-LED", "LED Desk Lamp", 1, 0.95),
+                ("SKU-CABLE-USBC", "USB-C Cable", 1, 0.9),
+            ),
+            component_lookalike_skus={"SKU-CABLE-USBC"},
+        )
+        extra = get_check(result, CheckKey.NO_EXTRA_ITEMS)
+        assert extra.verdict == Verdict.UNCERTAIN
         assert result.status == InspectionStatus.PENDING_REVIEW

@@ -31,6 +31,7 @@ from app.domain.schemas import (
 )
 from app.pipeline import run_inspection
 from app.storage.database import (
+    find_image_hash_owners,
     get_inspection as db_get_inspection,
     init_database,
     list_inspections as db_list_inspections,
@@ -38,6 +39,7 @@ from app.storage.database import (
     save_override as db_save_override,
     get_overrides as db_get_overrides,
 )
+from app.vision.quality import compute_file_sha256
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -47,6 +49,12 @@ _inspections: dict[str, dict] = {}
 
 # Initialize database on module load
 init_database()
+
+
+def _seen_hashes_for_order(org_id: str, order_id: str, image_paths: list[str]) -> dict[str, str]:
+    """Prior record ids for photo bytes already used on a different order (same org)."""
+    sha_list = [compute_file_sha256(p) for p in image_paths]
+    return find_image_hash_owners(org_id, sha_list, exclude_order_id=order_id)
 
 
 @router.post("/api/v1/quality/check")
@@ -317,11 +325,12 @@ async def verify_package(
         lines=req.order_lines,
     )
 
-    # Run pipeline
+    # Run pipeline (photo reuse map is org-scoped; same order re-check is allowed)
     inspection = run_inspection(
         order=order,
         image_paths=image_paths,
         catalogue=req.catalogue,
+        seen_hashes=_seen_hashes_for_order(req.org_id, req.order_id, image_paths),
     )
 
     inspection_data = inspection.model_dump(mode="json")
@@ -382,7 +391,12 @@ async def verify_package_json(
         lines=order_lines,
     )
 
-    inspection = run_inspection(order=order, image_paths=image_paths, catalogue=catalogue)
+    inspection = run_inspection(
+        order=order,
+        image_paths=image_paths,
+        catalogue=catalogue,
+        seen_hashes=_seen_hashes_for_order(org_id, order_id, image_paths),
+    )
 
     inspection_data = inspection.model_dump(mode="json")
     persist_inspection(inspection_data)
